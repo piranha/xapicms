@@ -1,4 +1,4 @@
-(ns mwagit.xml-rpc.lazyxml
+(ns gach.xml-rpc.lazyxml
   (:refer-clojure :exclude [find]))
 
 

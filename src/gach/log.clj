@@ -1,4 +1,4 @@
-(ns mwagit.log
+(ns gach.log
   "Derived from https://github.com/duct-framework/logger")
 
 

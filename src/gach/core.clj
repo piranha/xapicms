@@ -1,4 +1,4 @@
-(ns mwagit.core
+(ns gach.core
   (:require [clojure.string :as str]))
 
 

@@ -36,11 +36,11 @@
                      "-XX:+UnlockDiagnosticVMOptions"
                      "-XX:+DebugNonSafepoints"]
          :main-opts ["-m uberdeps.uberjar"
-                     "--target target/mwagit.jar"
-                     "--main-class mwagit.main"]}
+                     "--target target/gach.jar"
+                     "--main-class gach.main"]}
 
-  :native {:main-opts ["-m" "clj.native-image" "mwagit.main"
-                       "-H:Name=mwagit"
+  :native {:main-opts ["-m" "clj.native-image" "gach.main"
+                       "-H:Name=gach"
                        "-H:+TraceClassInitialization"
                        "-H:+ReportExceptionStackTraces"
                        "-H:+RemoveSaturatedTypeFlows"

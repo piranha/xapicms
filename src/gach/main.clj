@@ -1,10 +1,10 @@
-(ns mwagit.main
+(ns gach.main
   (:gen-class)
   (:require [mount.core :as mount]
             [org.httpkit.server :as httpkit]
 
-            [mwagit.log :as log]
-            [mwagit.app :as app]))
+            [gach.log :as log]
+            [gach.app :as app]))
 
 
 (set! *warn-on-reflection* true)

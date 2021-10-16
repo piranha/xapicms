@@ -1,4 +1,4 @@
-(ns mwagit.app
+(ns gach.app
   (:require [clojure.string :as str]
             [clojure.xml :as xml]
             [hiccup.core :as hi]
@@ -6,10 +6,10 @@
             [ring.middleware.json :as json]
             [reitit.core :as reitit]
 
-            [mwagit.log :as log]
-            [mwagit.xml-rpc.lazyxml :as x]
-            [mwagit.xml-rpc.value :as value]
-            [mwagit.ghost :as ghost])
+            [gach.log :as log]
+            [gach.xml-rpc.lazyxml :as x]
+            [gach.xml-rpc.value :as value]
+            [gach.ghost :as ghost])
   (:import [java.time Instant]))
 
 
@@ -41,7 +41,7 @@
      [blogid login pass]
      {:status 200
       :body   [{:username     login
-                :email        (str login "@mwagit.com")
+                :email        (str login "@gach.com")
                 :nicename     (str "Mr. " login)
                 :display_name (str "Who are you?")
                 :registered   (Instant/now)}]})
@@ -53,7 +53,7 @@
       :body   [(for [opt opts]
                  (case opt
                    "software_version" {:desc     "software_version"
-                                       :value    "mwagit 1.0"
+                                       :value    "gach 1.0"
                                        :readonly true}))]})
 
    "wp.getTaxonomies"

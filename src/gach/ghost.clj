@@ -1,8 +1,8 @@
-(ns mwagit.ghost
+(ns gach.ghost
   (:require [clojure.java.io :as io]
             [cljstache.core :as mustache]
 
-            [mwagit.core :as core])
+            [gach.core :as core])
   (:import [java.util Base64]))
 
 

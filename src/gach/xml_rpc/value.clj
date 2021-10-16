@@ -1,4 +1,4 @@
-(ns mwagit.xml-rpc.value
+(ns gach.xml-rpc.value
   (:import [clojure.lang IPersistentVector ISeq APersistentMap]
            [java.time Instant]))
 

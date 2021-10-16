@@ -2,7 +2,7 @@
   (:require [mount.core :as mount]
             cemerick.pomegranate
             cemerick.pomegranate.aether
-            mwagit.main))
+            gach.main))
 
 
 (defn add-dep [dep]
