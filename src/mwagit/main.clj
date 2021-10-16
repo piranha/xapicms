@@ -11,20 +11,18 @@
 (log/set-logger! (log/->Stdout))
 
 
-(defn port []
-  (Integer/parseInt
-    (or (System/getenv "PORT") "8000")))
+(def port (delay
+            (Integer/parseInt
+              (or (System/getenv "PORT") "1298"))))
 
 
 (mount/defstate server
   :start (do
-           (log/info "Starting" {:port (port)})
-           (httpkit/run-server app/app {:port (port)}))
+           (log/info "Starting" {:port @port})
+           (httpkit/run-server app/app {:port @port}))
   :stop (server))
 
 
 (defn -main [& args]
   (mount/start)
-  (println "Started on port" (port)))
-
-
+  (println "Started on port" @port))

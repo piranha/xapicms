@@ -1,37 +1,45 @@
 {:paths ["src" "resources"]
  :deps
- {org.clojure/clojure    {:mvn/version "1.10.2-alpha1"}
-  ring/ring-core         {:mvn/version "1.8.1"}
-  http-kit/http-kit      {:mvn/version "2.4.0"}
-  org.clojure/data.json  {:mvn/version "1.0.0"}
-  org.clojure/data.zip   {:mvn/version "1.0.0"}
-  mount/mount            {:mvn/version "0.1.16"}
-  hiccup/hiccup          {:mvn/version "1.0.5"}
-  org.slf4j/slf4j-api    {:mvn/version "1.7.30"}
-  org.slf4j/slf4j-simple {:mvn/version "1.7.30"}}
+ {org.clojure/clojure             {:mvn/version "1.10.3"}
+  ring/ring-core                  {:mvn/version "1.9.4"}
+  ring/ring-json                  {:mvn/version "0.5.1"}
+  ring/ring-defaults              {:mvn/version "0.3.3"}
+  metosin/reitit-core             {:mvn/version "0.5.15"}
+  javax.servlet/javax.servlet-api {:mvn/version "3.1.0"}
+  http-kit/http-kit               {:mvn/version "2.5.3"}
+  org.clojure/data.json           {:mvn/version "2.4.0"}
+  org.clojure/data.zip            {:mvn/version "1.0.0"}
+  mount/mount                     {:mvn/version "0.1.16"}
+  hiccup/hiccup                   {:mvn/version "1.0.5"}
+  cljstache/cljstache             {:mvn/version "2.0.6"}
+  org.slf4j/slf4j-api             {:mvn/version "1.7.32"}
+  org.slf4j/slf4j-simple          {:mvn/version "1.7.32"}}
 
  :jvm-opts ["-Djava.net.preferIPv4Stack=true"
             "-Djava.net.preferIPv4Addresses=true"]
 
  :aliases
- {:dev {:extra-deps {nrepl/nrepl                   {:mvn/version "0.7.0"}
-                     cider/cider-nrepl             {:mvn/version "0.25.0"}
-                     refactor-nrepl/refactor-nrepl {:mvn/version "2.5.0"}
-                     clj-commons/pomegranate       {:mvn/version "1.2.0"}}
-        :main-opts  ["-i dev/user.clj"
-                     "-m nrepl.cmdline -i"
-                     "--middleware [\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}
+ {:dev {:extra-deps {nrepl/nrepl                              {:mvn/version "0.8.3"}
+                     cider/cider-nrepl                        {:mvn/version "0.26.0"}
+                     refactor-nrepl/refactor-nrepl            {:mvn/version "2.5.0"}
+                     clj-commons/pomegranate                  {:mvn/version "1.2.1"}
+                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}}
+        :main-opts  ["-i" "dev/user.clj"
+                     "-m" "nrepl.cmdline"
+                     "-i"
+                     "--middleware" "[\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}
 
-  :uber {:deps      {uberdeps/uberdeps {:mvn/version "0.1.10"}}
+  :uber {:deps      {uberdeps/uberdeps {:mvn/version "1.1.0"}}
          :jvm-opts  ["-Dclojure.compiler.direct-linking=true"
-                     "-Dclojure.spec.skip-macros=true"]
+                     "-Dclojure.spec.skip-macros=true"
+                     "-Djdk.attach.allowAttachSelf"
+                     "-XX:+UnlockDiagnosticVMOptions"
+                     "-XX:+DebugNonSafepoints"]
          :main-opts ["-m uberdeps.uberjar"
                      "--target target/mwagit.jar"
                      "--main-class mwagit.main"]}
 
-  :native {:main-opts ["-m clj.native-image mwagit.main"
-                       "--language:js"
-                       ;; optional native image name override
+  :native {:main-opts ["-m" "clj.native-image" "mwagit.main"
                        "-H:Name=mwagit"
                        "-H:+TraceClassInitialization"
                        "-H:+ReportExceptionStackTraces"
@@ -45,7 +53,7 @@
            :extra-deps
            {clj.native-image/clj.native-image
             {:git/url "https://github.com/taylorwood/clj.native-image.git"
-             :sha     "602587dfb5243ea8c72ed3e967c37c1f9d611723"}}}
+             :sha     "4604ae76855e09cdabc0a2ecc5a7de2cc5b775d6"}}}
 
-  :ancient {:extra-deps {olical/depot {:mvn/version "1.8.4"}}
-            :main-opts  ["-m" "depot.outdated.main"]}}}
+  :ancient {:extra-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
+            :main-opts  ["-m" "antq.core"]}}}

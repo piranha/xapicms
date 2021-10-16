@@ -1,13 +1,16 @@
 (ns user
   (:require [mount.core :as mount]
-            [cemerick.pomegranate :as pomegranate]
-            [mwagit.main]))
+            cemerick.pomegranate
+            cemerick.pomegranate.aether
+            mwagit.main))
+
+
+(defn add-dep [dep]
+  (cemerick.pomegranate/add-dependencies
+    :coordinates  [dep]
+    :repositories (merge cemerick.pomegranate.aether/maven-central
+                    {"clojars" "https://clojars.org/repo"})))
 
 
 (comment
-  (let [cl (.getContextClassLoader (Thread/currentThread))]
-    (.setContextClassLoader (Thread/currentThread) (clojure.lang.DynamicClassLoader. cl))
-    (add-dependencies
-      :coordinates '[[com.brunobonacci/mulog "0.2.0"]]
-      :repositories (merge cemerick.pomegranate.aether/maven-central
-                      {"clojars" "https://clojars.org/repo"}))))
+  (add-dep '[cljstache "2.0.6"]))

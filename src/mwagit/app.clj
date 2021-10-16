@@ -2,14 +2,21 @@
   (:require [clojure.string :as str]
             [clojure.xml :as xml]
             [hiccup.core :as hi]
+            [ring.middleware.defaults :as defaults]
+            [ring.middleware.json :as json]
+            [reitit.core :as reitit]
 
             [mwagit.log :as log]
             [mwagit.xml-rpc.lazyxml :as x]
-            [mwagit.xml-rpc.value :as value])
+            [mwagit.xml-rpc.value :as value]
+            [mwagit.ghost :as ghost])
   (:import [java.time Instant]))
 
 
 (set! *warn-on-reflection* true)
+
+;; (def SECRET (or (not-empty (System/getenv "MWAGIT_SECRET"))
+;;                 (throw "Unknown client secret!")))
 
 
 (def METHODS
@@ -93,25 +100,62 @@
           [:param (value/to v)])]])))
 
 
-(defn dispatch [methods req]
-  (let [xml         (xml/parse (:body req))
-        method-name (not-empty (x/find1 xml [:methodName string?]))
-        params      (->> (x/find xml [:params :param])
-                         (mapv (comp value/parse first :content)))
-        _           (log/info "request" {:method method-name
-                                         :params params})
-        handler     (get methods method-name)]
-    (if handler
-      (-> (apply handler params)
-          (update :body body->xml))
-      (do
-        (log/info "unknown method" {:method method-name})
-        {:status 404
-         :body   "Not Found"}))))
-
-
-(defn app [req]
+(defn mwa-dispatch [req]
   (case (:request-method req)
-    :get  {:status 200
-           :body   (str/join "\n" (map name (keys METHODS)))}
-    :post (dispatch METHODS req)))
+    :get {:status 200
+          :body   (str/join "\n" (map name (keys METHODS)))}
+    :post
+    (let [xml         (xml/parse (:body req))
+          method-name (not-empty (x/find1 xml [:methodName string?]))
+          params      (->> (x/find xml [:params :param])
+                           (mapv (comp value/parse first :content)))
+          _           (log/info "request" {:method method-name
+                                           :params params})
+          handler     (get METHODS method-name)]
+      (if handler
+        (-> (apply handler params)
+            (update :body body->xml))
+        (do
+          (log/info "unknown method" {:method method-name})
+          {:status 404
+           :body   "Not Found"})))))
+
+
+(defn log [req]
+  (log/info "request" req)
+  {:status 204})
+
+
+(defn routes []
+  [["/xmlrpc.php" mwa-dispatch]
+   ["/ghost/api/v4/admin" (ghost/routes)]])
+
+
+(def dev-router #(reitit/router (routes)))
+(def prod-router (constantly (reitit/router (routes))))
+
+
+(defn -app [req]
+  (prn (:request-method req) (:uri req))
+  (let [router (if true ; dev
+                 (dev-router)
+                 (prod-router))
+        m      (reitit/match-by-path router (:uri req))]
+    (if m
+      ((:result m) (assoc req :path-params (:path-params m)))
+      (log req))))
+
+
+(def app
+  (-> -app
+      (json/wrap-json-response)
+      (json/wrap-json-body {:keywords? true})
+      (defaults/wrap-defaults {:params    {:urlencoded true
+                                           :keywordize true
+                                           :multipart  true}
+                               :cookies   true
+                               :static    {:resources "public"}
+                               :responses {:not-modified-responses true
+                                           :absolute-redirects     true
+                                           :content-types          true
+                                           :default-charset        "utf-8"}})))

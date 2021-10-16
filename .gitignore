@@ -3,4 +3,5 @@
 /piu
 /.cpcache/
 /.nrepl-port
-/piu.sqlite
+/mwagit.private-key.pem
+/resources/public
