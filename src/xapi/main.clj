@@ -1,10 +1,10 @@
-(ns gach.main
+(ns xapi.main
   (:gen-class)
   (:require [mount.core :as mount]
             [org.httpkit.server :as httpkit]
 
-            [gach.log :as log]
-            [gach.app :as app]))
+            [xapi.log :as log]
+            [xapi.app :as app]))
 
 
 (set! *warn-on-reflection* true)

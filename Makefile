@@ -1,13 +1,14 @@
 VERSION = $(shell cat VERSION)
-export JAVA_HOME = $(HOME)/var/graalvm-ce-java11-21.1.0/Contents/Home
-export GRAALVM_HOME = $(JAVA_HOME)
+#export JAVA_HOME = $(HOME)/var/graalvm-ce-java11-21.1.0/Contents/Home
+#export GRAALVM_HOME = $(JAVA_HOME)
+
+include ./.config.mk
 
 run:
 	clj -M:dev
 
-uber:
-	clojure -Srepro -e "(compile 'piu.main)"
-	clojure -Srepro -M:uber
+ancient:
+	clojure -M:dev:ancient
 
-compile:
-	clojure -Srepro -M:native
+upgrade:
+	clojure -M:dev:ancient --upgrade

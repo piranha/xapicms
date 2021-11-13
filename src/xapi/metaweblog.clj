@@ -1,22 +1,12 @@
-(ns gach.app
+(ns xapi.metaweblog
   (:require [clojure.string :as str]
             [clojure.xml :as xml]
             [hiccup.core :as hi]
-            [ring.middleware.defaults :as defaults]
-            [ring.middleware.json :as json]
-            [reitit.core :as reitit]
 
-            [gach.log :as log]
-            [gach.xml-rpc.lazyxml :as x]
-            [gach.xml-rpc.value :as value]
-            [gach.ghost :as ghost])
+            [xapi.log :as log]
+            [xapi.core.xml-rpc.lazyxml :as x]
+            [xapi.core.xml-rpc.value :as value])
   (:import [java.time Instant]))
-
-
-(set! *warn-on-reflection* true)
-
-;; (def SECRET (or (not-empty (System/getenv "MWAGIT_SECRET"))
-;;                 (throw "Unknown client secret!")))
 
 
 (def METHODS
@@ -41,7 +31,7 @@
      [blogid login pass]
      {:status 200
       :body   [{:username     login
-                :email        (str login "@gach.com")
+                :email        (str login "@xapi.com")
                 :nicename     (str "Mr. " login)
                 :display_name (str "Who are you?")
                 :registered   (Instant/now)}]})
@@ -53,7 +43,7 @@
       :body   [(for [opt opts]
                  (case opt
                    "software_version" {:desc     "software_version"
-                                       :value    "gach 1.0"
+                                       :value    "xapi 1.0"
                                        :readonly true}))]})
 
    "wp.getTaxonomies"
@@ -90,7 +80,6 @@
    "metaWeblog.getUsersBlogs"  nil})
 
 
-
 (defn body->xml [body]
   (str "<?xml version=\"1.0\"?>\n"
     (hi/html
@@ -100,7 +89,7 @@
           [:param (value/to v)])]])))
 
 
-(defn mwa-dispatch [req]
+(defn dispatch [req]
   (case (:request-method req)
     :get {:status 200
           :body   (str/join "\n" (map name (keys METHODS)))}
@@ -121,41 +110,3 @@
            :body   "Not Found"})))))
 
 
-(defn log [req]
-  (log/info "request" req)
-  {:status 204})
-
-
-(defn routes []
-  [["/xmlrpc.php" mwa-dispatch]
-   ["/ghost/api/v4/admin" (ghost/routes)]])
-
-
-(def dev-router #(reitit/router (routes)))
-(def prod-router (constantly (reitit/router (routes))))
-
-
-(defn -app [req]
-  (prn (:request-method req) (:uri req))
-  (let [router (if true ; dev
-                 (dev-router)
-                 (prod-router))
-        m      (reitit/match-by-path router (:uri req))]
-    (if m
-      ((:result m) (assoc req :path-params (:path-params m)))
-      (log req))))
-
-
-(def app
-  (-> -app
-      (json/wrap-json-response)
-      (json/wrap-json-body {:keywords? true})
-      (defaults/wrap-defaults {:params    {:urlencoded true
-                                           :keywordize true
-                                           :multipart  true}
-                               :cookies   true
-                               :static    {:resources "public"}
-                               :responses {:not-modified-responses true
-                                           :absolute-redirects     true
-                                           :content-types          true
-                                           :default-charset        "utf-8"}})))

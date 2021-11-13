@@ -1,5 +1,6 @@
-(ns gach.log
-  "Derived from https://github.com/duct-framework/logger")
+(ns xapi.log
+  "Derived from https://github.com/duct-framework/logger"
+  (:import [java.time Instant]))
 
 
 (def *logger
@@ -21,19 +22,20 @@
 
 (defrecord Stdout []
   Logger
-  (-log [this level file line event data]
+  (-log [_ level file line event data]
     (let [time  (:log/time @data)
           data' (dissoc @data :log/time)]
-      (printf "%-5s %s %s:%s %s %s\n" (.toUpperCase (name level)) time file line event (pr-str data')))))
+      (println
+        (format "%-5s %s %s:%s %s %s" (.toUpperCase (name level)) time file line event (pr-str data'))))))
 
 
 (defn- log-form [level event data form]
   `(-log *logger
          ~level
-         ~*file* ~(:line (meta form))
+         ~*ns* ~(:line (meta form))
          ~event
          (delay (assoc ~data
-                  :log/time (System/currentTimeMillis)
+                  :log/time (Instant/now)
                   :log/id   (java.util.UUID/randomUUID)))))
 
 

@@ -1,4 +1,4 @@
-(ns gach.core
+(ns xapi.core
   (:require [clojure.string :as str]))
 
 
@@ -25,3 +25,7 @@
       ->latin
       (str/replace #"[^\w^\d]+" "-")
       (str/replace #"^-|-$" "")))
+
+
+(defn ext [s]
+  (subs s (str/last-index-of s ".")))

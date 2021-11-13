@@ -1,6 +1,7 @@
+/.config.mk
 /target/
 /classes/
-/piu
+/gach
 /.cpcache/
 /.nrepl-port
 /gach.private-key.pem

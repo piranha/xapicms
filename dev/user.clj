@@ -1,8 +1,9 @@
 (ns user
-  (:require [mount.core :as mount]
+  (:require [clojure.java.io :as io]
+            [mount.core :as mount]
             cemerick.pomegranate
             cemerick.pomegranate.aether
-            gach.main))
+            xapi.main))
 
 
 (defn add-dep [dep]
@@ -13,4 +14,5 @@
 
 
 (comment
-  (add-dep '[cljstache "2.0.6"]))
+  (add-dep '[hiccup "2.0.0-alpha2"])
+  (add-dep '[com.clojure-goes-fast/clj-async-profiler "0.5.1"]))
