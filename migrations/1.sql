@@ -6,7 +6,8 @@ create table users (
   email text not null,
   "name" text,
   access_token text not null,
-  apikey text
+  apikey text,
+  repo text
 );
 
 create unique index users_github on users (github);
@@ -38,4 +39,30 @@ create table posts (
   html text,
   
   primary key(user_id, id)
+);
+
+create table post_log (
+  id serial primary key,
+  user_id int not null references users (id),
+  created_at timestamptz default now() not null,
+  request jsonb not null
+);
+
+
+create table webhook (
+  id serial primary key,
+  user_id int not null references users (id),
+  created_at timestamptz default now() not null,
+  type text not null, -- github or external
+  url text not null, -- repo in case of github
+  headers jsonb,
+  enabled boolean not null default true
+);
+
+create table webhook_log (
+  id serial primary key,
+  webhook_id int not null references webhook (id),
+  created_at timestamptz default now() not null,
+  request jsonb not null,
+  response jsonb
 );

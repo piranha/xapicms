@@ -5,6 +5,7 @@
   ring/ring-json                  {:mvn/version "0.5.1"}
   ring/ring-defaults              {:mvn/version "0.3.3"}
   metosin/reitit-core             {:mvn/version "0.5.15"}
+  metosin/malli                   {:mvn/version "0.6.2"}
   javax.servlet/javax.servlet-api {:mvn/version "4.0.1"}
   http-kit/http-kit               {:mvn/version "2.5.3"}
   org.clojure/data.zip            {:mvn/version "1.0.0"}
@@ -29,12 +30,13 @@
                      cider/cider-nrepl                        {:mvn/version "0.27.2"}
                      refactor-nrepl/refactor-nrepl            {:mvn/version "3.0.0"}
                      clj-commons/pomegranate                  {:mvn/version "1.2.1"}
-                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}}
-        :jvm-opts ["-Djava.net.preferIPv4Stack=true"
-                   "-Djava.net.preferIPv4Addresses=true"
-                   "-Djdk.attach.allowAttachSelf"
-                   "-XX:+UnlockDiagnosticVMOptions"
-                   "-XX:+DebugNonSafepoints"]
+                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}
+                     org.clojure/tools.namespace              {:mvn/version "1.1.0"}}
+        :jvm-opts   ["-Djava.net.preferIPv4Stack=true"
+                     "-Djava.net.preferIPv4Addresses=true"
+                     "-Djdk.attach.allowAttachSelf"
+                     "-XX:+UnlockDiagnosticVMOptions"
+                     "-XX:+DebugNonSafepoints"]
         :main-opts  ["-i" "dev/user.clj"
                      "-m" "nrepl.cmdline"
                      "-i"

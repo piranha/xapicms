@@ -3,7 +3,26 @@
             [mount.core :as mount]
             cemerick.pomegranate
             cemerick.pomegranate.aether
-            xapi.main))
+            xapi.main
+            [clojure.tools.namespace.repl :as tn]))
+
+
+(clojure.tools.namespace.repl/set-refresh-dirs "src" "test")
+
+
+(defn refresh []
+  (let [real-out *out*
+        sw       (java.io.StringWriter.)]
+    (binding [*out* sw]
+      (let [res (tn/refresh)]
+        (binding [*out* real-out]
+          (if (instance? java.io.FileNotFoundException res)
+            (do
+              (tn/clear)
+              (tn/refresh))
+            (do
+              (print (str sw))
+              res)))))))
 
 
 (defn add-dep [dep]

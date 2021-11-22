@@ -7,8 +7,7 @@
 
             [xapi.config :as config]
             [xapi.core.db :as db]
-            [xapi.core :as core]
-            [xapi.auth :as auth]))
+            [xapi.core :as core]))
 
 
 (set! *warn-on-reflection* true)
@@ -46,7 +45,16 @@
 
 
 (def ^:dynamic *uid* nil)
-(def ^:dynamic user nil)
+(def ^ThreadLocal *user (ThreadLocal.))
+
+(defn uid []
+  *uid*)
+
+(defn user []
+  (when *uid*
+    (or (.get *user)
+        (do (.set *user (db/one (user-q *uid*)))
+            (.get *user)))))
 
 
 (defn wrap-auth [handler]
@@ -54,17 +62,11 @@
     (let [sess-uid  (-> req :session :user_id)
           ghost-uid (some-> req :cookies (get "ghost-admin-api-session") :value
                       b64->map :user_id)
-          uid       (or sess-uid ghost-uid)
-          user-fn   (fn [] (when uid (db/one (user-q uid))))
-          ;; delay makes only single call to user-fn
-          -delay    (delay (user-fn))]
-      (binding [*uid* uid
-                user  #(deref -delay)]
-        (handler req)))))
-
-
-(defn uid []
-  *uid*)
+          uid       (or sess-uid ghost-uid)]
+      (binding [*uid* uid]
+        (let [res (handler req)]
+          (.set *user nil)
+          res)))))
 
 
 (defn by-email [email password]
@@ -162,20 +164,5 @@
       :else
       {:status  302
        :session {:user_id (:id user)}
-       :headers {"Location" "/"}
-       :body    ""})))
-
-
-(defn settings [{:keys [form-params request-method] :as req}]
-  (if (not= request-method :post)
-    {:status 405
-     :body "Method Not Allowed"}
-    (do
-      (db/one {:update :users
-               :where  [:= :id (auth/uid)]
-               :set    (cond-> {:repo (get form-params "repo")}
-                         (get form-params "apikey-new")
-                         (assoc :apikey (core/uuid)))})
-      {:status  302
        :headers {"Location" "/"}
        :body    ""})))

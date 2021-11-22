@@ -5,6 +5,7 @@
            [java.time.format DateTimeFormatter])
   (:require [cognitect.aws.client.api :as aws]
             [clojure.java.io :as io]
+            [org.httpkit.client :as http]
             [hiccup2.core :as hi]
 
             [xapi.core :as core]
@@ -19,6 +20,7 @@
 (set! *warn-on-reflection* true)
 
 
+(def REQ-LOG [:request-method :uri :query-string :headers :body])
 (def BASE "resources/public/")
 (def s3 (aws/client {:api               :s3
                      :region            "us-east-1"
@@ -38,18 +40,94 @@
       .toInstant))
 
 
-(defn send-webhook! [post]
-  (let [user (auth/user)
-        url  (format "/repos/%s/%s/dispatches" (:github user) (:repo user))
-        res (auth/gh! url (:access_token user)
-              {:method :post
-               :body
-               (json/generate-string
-                 {:event_type     "xapicms"
-                  :client_payload {:slug  (:slug post)
-                                   :url   (str "https://" (config/DOMAIN) (:url post))
-                                   :draft (= "draft" (:status post))}})})]
-    (log/info "github webhook" res)))
+(defn store-log! [log-table data]
+  (db/q {:insert-into log-table
+         :values      [(assoc data :user_id (auth/uid))]})
+  (db/q {:delete-from log-table
+         :where       [:in :id {:from     [log-table]
+                                :select   [:id]
+                                :where    [:= :user_id (auth/uid)]
+                                :order-by [[:id :desc]]
+                                :offset   50}]}))
+
+
+(defn send-webhooks! [post]
+  (assert (:url post))
+  (let [hooks    (db/q {:from   [:webhook]
+                        :select [:id :type :url :headers]
+                        :where  [:and
+                                 [:= :user_id (auth/uid)]
+                                 :enabled]})
+        user     (auth/user)
+        post-url (str "https://" (config/DOMAIN) (:url post))
+        req      {:method  :post
+                  :headers {"Accept"        "application/vnd.github.v3+json"
+                            "Authorization" (str "token " (:access_token user))}
+                  :body    (json/generate-string
+                             {:event_type     "xapicms"
+                              :client_payload {:github       (:github user)
+                                               :slug         (:slug post)
+                                               :url          post-url
+                                               :draft        (= "draft" (:status post))
+                                               :published_at (:published_at post)}})}]
+    (doseq [hook hooks]
+      (let [dest (case (:type hook)
+                   "github"
+                   (format "https://api.github.com/repos/%s/%s/dispatches"
+                     (:github user) (:url hook))
+
+                   "url"
+                   (:url hook))
+            res  @(http/request (assoc req :url dest))]
+        (store-log! :webhook_log {:webhook_id (:id hook)
+                                  :request    [:lift (select-keys req REQ-LOG)]
+                                  :response   [:lift res]})
+        (log/info "github webhook" res)))))
+
+
+;;; Data/Queries
+
+(defn make-dbpost [post]
+  (let [slug (or (not-empty (:slug post))
+                 (str (core/uuid)))
+        html (:html post)]
+    {:user_id       (auth/uid)
+     :id            (str (idenc/encode (or (auth/uid) 0)) "__" slug)
+     :slug          slug
+     :title         (not-empty (:title post))
+     :uuid          (core/uuid) ;; Ulysses needs that, but does not use it
+     :tags          (when (seq (:tags post))
+                      [:array (:tags post)])
+     :status        (:status post)
+     :html          html
+     :updated_at    (or (some-> (:updated_at post) parse-dt)
+                        (Instant/now))
+     :published_at  (some-> (:published_at post) parse-dt)
+     :feature_image (:feature_image post)}))
+
+
+(def DBPOST-KEYS (keys (make-dbpost nil)))
+
+
+(defn upsert-image-q [post]
+  {:insert-into   :images
+   :values        [{:id         (:id post)
+                    :path       (:path post)
+                    :hash       (:hash post)
+                    :user_id    (auth/uid)
+                    :updated_at (Instant/now)}]
+   :on-conflict   [:user_id :id]
+   :do-update-set [:updated_at :hash :path]})
+
+
+(defn get-post-q [id]
+  {:from   [:posts]
+   :select DBPOST-KEYS
+   :where  [:and
+            [:= :user_id (auth/uid)]
+            [:or
+             [:= :id id]
+             [:= :slug id]]]})
 
 
 ;;; Resources
@@ -105,14 +183,14 @@
 
 
 (defn upload-image [{:keys [params]}]
-  (let [file   (:file params)
-        ba     (-> (:tempfile file) io/input-stream .readAllBytes)
-        hash   (-> (doto (Adler32.)
-                     (.update ba))
-                   .getValue
-                   str)
-        record (get-file-or-name (:filename file))]
-    (when (not= hash (:hash record))
+  (let [file    (:file params)
+        ba      (-> (:tempfile file) io/input-stream .readAllBytes)
+        hashsum (-> (doto (Adler32.)
+                      (.update ba))
+                    .getValue
+                    str)
+        record  (get-file-or-name (:filename file))]
+    (when (not= hashsum (:hash record))
       (let [res (aws/invoke s3 {:op      :PutObject
                                 :request {:Bucket      "xapi"
                                           :Key         (:path record)
@@ -120,38 +198,9 @@
                                           :ContentType (:content-type file)
                                           :Body        ba}})]
         (log/info "file upload" {:key (:path record) :res res}))
-      (db/q {:insert-into   :images
-             :values        [{:id         (:id record)
-                              :path       (:path record)
-                              :hash       hash
-                              :user_id    (auth/uid)
-                              :updated_at (Instant/now)}]
-             :on-conflict   [:user_id :id]
-             :do-update-set [:updated_at :hash :path]}))
+      (db/q (upsert-image-q (assoc record :hash hashsum))))
     {:status 200
      :body   {:images [{:url (str "https://images.solovyov.net/" (:path record))}]}}))
-
-
-(defn make-dbpost [post]
-  (let [slug (or (not-empty (:slug post))
-                 (str (core/uuid)))
-        html (:html post)]
-    {:user_id       (auth/uid)
-     :id            (str (idenc/encode (or (auth/uid) 0)) "__" slug)
-     :slug          slug
-     :title         (not-empty (:title post))
-     :uuid          (core/uuid) ;; Ulysses needs that, but does not use it
-     :tags          (when (seq (:tags post))
-                      [:array (:tags post)])
-     :status        (:status post)
-     :html          html
-     :updated_at    (or (some-> (:updated_at post) parse-dt)
-                        (Instant/now))
-     :published_at  (some-> (:published_at post) parse-dt)
-     :feature_image (:feature_image post)}))
-
-
-(def DBPOST-KEYS (keys (make-dbpost nil)))
 
 
 (defn dbres->post [post]
@@ -159,21 +208,23 @@
       (update :tags #(mapv make-tag %))
       (dissoc :user_id)
       (assoc :url (format "/posts/%s/%s"
-                    (idenc/encode (auth/uid))
+                    (idenc/encode (:user_id post))
                     (:slug post)))))
 
 
 (defn upload-post [req]
-  (let [input   (-> req :body :posts first)
+  (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
+
+  (let [input  (-> req :body :posts first)
         dbpost (make-dbpost input)
         res    (db/one {:insert-into   :posts
                         :values        [dbpost]
                         :on-conflict   [:user_id :id]
                         :do-update-set (keys dbpost)
                         :returning     (keys dbpost)})
-        post (dbres->post res)]
+        post   (dbres->post res)]
     (if (seq (:repo (auth/user)))
-      (send-webhook! post)
+      (send-webhooks! post)
       (log/info "user has no repo set, not sending webhook"))
     {:status 200
      :body   {:posts [post]}}))
@@ -182,11 +233,7 @@
 (defn get-post [{{:keys [id]} :path-params :as req}]
   (if (= (:request-method req) :put)
     (upload-post req)
-    (if-let [res (db/one {:from   [:posts]
-                          :select DBPOST-KEYS
-                          :where  [:and
-                                   [:= :user_id (auth/uid)]
-                                   [:= :id id]]})]
+    (if-let [res (db/one (get-post-q id))]
       {:status 200
        :body   {:posts [(dbres->post res)]}}
       {:status 422 ;; really, Ghost?

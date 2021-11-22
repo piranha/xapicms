@@ -3,15 +3,18 @@
   (:require [ring.middleware.defaults :as defaults]
             [ring.middleware.json :as json]
             [ring.middleware.session.cookie :as session-cookie]
+            [ring.util.response :as response]
             [reitit.core :as reitit]
             [cheshire.generate]
 
             [xapi.log :as log]
+            [xapi.config :as config]
             [xapi.auth :as auth]
             [xapi.metaweblog :as mwb]
             [xapi.ghost :as ghost]
-            [xapi.ui :as ui]
-            [xapi.config :as config]))
+            [xapi.ui
+             [settings :as ui.settings]
+             [post :as ui.post]] ))
 
 
 (set! *warn-on-reflection* true)
@@ -34,10 +37,15 @@
    :body   "Not Found"})
 
 
+(defn static [{{:keys [path]} :path-params}]
+  (response/resource-response path {:root "public"}))
+
+
 (defn routes []
-  [["/" ui/index]
-   ["/posts/:id/:slug" ui/post]
-   ["/settings" auth/settings]
+  [["/" ui.settings/index]
+   ["/posts/:id/:slug" ui.post/post]
+   ["/static/{*path}" static]
+   ["/settings" ui.settings/form]
    ["/favicon.ico" h404]
    ["/oauth" auth/start]
    ["/oauth/github" auth/github-cb]
@@ -72,7 +80,6 @@
          :cookies   true
          :session   {:store (session-cookie/cookie-store
                               {:key (.getBytes ^String (config/SECRET) "UTF-8")})}
-         :static    {:resources "public"}
          :responses {:not-modified-responses true
                      :absolute-redirects     true
                      :content-types          true
