@@ -15,7 +15,7 @@ upgrade:
 	clojure -M:dev:ancient --upgrade
 
 uber:
-	clojure -Srepro -M:uber
+	clojure -Srepro -T:build uber
 
 compile:
 	clojure -Srepro -M:native

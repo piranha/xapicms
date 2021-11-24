@@ -68,7 +68,7 @@
       (log req))))
 
 
-(def app
+(defn make-app []
   (-> -app
       (auth/wrap-auth)
       (json/wrap-json-response)
@@ -79,9 +79,7 @@
                      :multipart  true}
          :cookies   true
          :session   {:store (session-cookie/cookie-store
-                              {:key (let [secret (or (config/SECRET)
-                                                     (apply str (repeat 16 "x")))]
-                                      (.getBytes ^String secret "UTF-8"))})}
+                              {:key (.getBytes ^String (config/SECRET) "UTF-8")})}
          :responses {:not-modified-responses true
                      :absolute-redirects     true
                      :content-types          true

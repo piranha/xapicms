@@ -108,7 +108,7 @@
      :feature_image (:feature_image post)}))
 
 
-(def DBPOST-KEYS (keys (make-dbpost nil)))
+(def DBPOST-KEYS (delay (keys (make-dbpost nil))))
 
 
 (defn upsert-image-q [post]
@@ -124,7 +124,7 @@
 
 (defn get-post-q [id]
   {:from   [:posts]
-   :select DBPOST-KEYS
+   :select @DBPOST-KEYS
    :where  [:and
             [:= :user_id (auth/uid)]
             [:or

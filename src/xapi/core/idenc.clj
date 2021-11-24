@@ -35,7 +35,9 @@
      :decoding (decoding-alphabet ab)}))
 
 
-(def ALPHABET (make-config "" "0123456789abcdefghijklmnopqrstuvwxyz" (config/SECRET)))
+(def ALPHABET
+  (delay
+    (make-config "" "0123456789abcdefghijklmnopqrstuvwxyz" (config/SECRET))))
 
 
 (defn -encode [base alphabet value]
@@ -55,10 +57,10 @@
 
 
 (defn encode [value]
-  (let [{:keys [prefix base alphabet]} ALPHABET]
+  (let [{:keys [prefix base alphabet]} @ALPHABET]
     (str prefix (-encode base alphabet value))))
 
 
 (defn decode [value]
-  (let [{:keys [prefix base decoding]} ALPHABET]
+  (let [{:keys [prefix base decoding]} @ALPHABET]
     (-decode base decoding (.substring value (count prefix)))))

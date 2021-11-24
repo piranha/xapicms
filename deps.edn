@@ -1,4 +1,4 @@
-{:paths ["src" "resources"]
+{:paths ["src" "resources" "test"]
  :deps
  {org.clojure/clojure             {:mvn/version "1.10.3"}
   ring/ring-core                  {:mvn/version "1.9.4"}
@@ -21,7 +21,10 @@
   org.postgresql/postgresql         {:mvn/version "42.3.1"}
   com.github.seancorfield/honeysql  {:mvn/version "2.1.818"}
 
-  oauth/oauth.two {:mvn/version "0.4.0"}
+  oauth/oauth.two  {:mvn/version "0.4.0"
+                    :exclusions  [prismatic/schema]}
+  ;; for oauth.two
+  prismatic/schema {:mvn/version "1.2.0"}
 
   com.cognitect.aws/api       {:mvn/version "0.8.524"}
   com.cognitect.aws/endpoints {:mvn/version "1.1.12.110"}
@@ -44,16 +47,8 @@
                      "-i"
                      "--middleware" "[\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}
 
-  :uber {:deps      {uberdeps/uberdeps {:mvn/version "1.1.1"}}
-         :jvm-opts  ["-Dclojure.compiler.direct-linking=true"
-                     "-Dclojure.spec.skip-macros=true"
-                     "-Djdk.attach.allowAttachSelf"
-                     "-XX:+UnlockDiagnosticVMOptions"
-                     "-XX:+DebugNonSafepoints"]
-         :main-opts ["-m" "uberdeps.uberjar"
-                     "--deps-file" "deps.edn"
-                     "--target" "target/xapi.jar"
-                     "--main-class" "xapi.main"]}
+  :build {:deps       {io.github.clojure/tools.build {:git/tag "v0.6.6" :git/sha "4d41c26"}}
+          :ns-default build}
 
   :native {:main-opts ["-m" "clj.native-image" "xapi.main"
                        "-H:Name=xapi"

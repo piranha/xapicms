@@ -6,6 +6,7 @@
             [org.httpkit.sni-client :as sni-client]
 
             [xapi.log :as log]
+            [xapi.config :as config]
             [xapi.app :as app]))
 
 
@@ -14,18 +15,13 @@
 (alter-var-root #'http/*default-client* (fn [_] sni-client/default-client))
 
 
-(def port (delay
-            (Integer/parseInt
-              (or (System/getenv "PORT") "1298"))))
-
-
 (mount/defstate server
   :start (do
-           (log/info "Starting" {:port @port})
-           (httpkit/run-server app/app {:port @port}))
+           (log/info "Starting" {:port (config/PORT)})
+           (httpkit/run-server (app/make-app) {:port (config/PORT)}))
   :stop (server))
 
 
 (defn -main [& args]
   (mount/start)
-  (println "Started on port" @port))
+  (println "Started on port" (config/PORT)))

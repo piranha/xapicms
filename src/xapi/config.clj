@@ -4,14 +4,21 @@
 (set! *warn-on-reflection* true)
 
 
-(defn get-env [var-name msg]
-  (or (some-> (System/getenv var-name) str/trim)
-      (binding [*out* *err*]
-        (println msg))))
+(defn get-env
+  ([var-name desc]
+   (get-env var-name nil desc))
+  ([var-name default desc]
+   (or (some-> (System/getenv var-name) str/trim)
+       default
+       (binding [*out* *err*]
+         (println desc)
+         (System/exit 1)))))
 
 
-(def PORT     #(or (some-> (System/getenv "PORT") str/trim Integer/parseInt)
-                   1298))
+(def PORT     #(-> (get-env "PORT" "1298"
+                     "PORT to start on")
+                   str/trim
+                   Integer/parseInt))
 (def PGURL    #(get-env "PGURL"
                  "PGURL env var is empty, please set to Postgres URL"))
 (def DOMAIN   #(get-env "DOMAIN"
