@@ -50,9 +50,10 @@
                      "-Djdk.attach.allowAttachSelf"
                      "-XX:+UnlockDiagnosticVMOptions"
                      "-XX:+DebugNonSafepoints"]
-         :main-opts ["-m uberdeps.uberjar"
-                     "--target target/xapi.jar"
-                     "--main-class xapi.main"]}
+         :main-opts ["-m" "uberdeps.uberjar"
+                     "--deps-file" "deps.edn"
+                     "--target" "target/xapi.jar"
+                     "--main-class" "xapi.main"]}
 
   :native {:main-opts ["-m" "clj.native-image" "xapi.main"
                        "-H:Name=xapi"

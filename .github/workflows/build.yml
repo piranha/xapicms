@@ -21,8 +21,9 @@ jobs:
     - uses: DeLaGuardo/setup-clojure@master
       with:
         tools-deps: '1.10.3.1029'
-    - run: gu install native-image
-    - run: make compile
+    # - run: gu install native-image
+    # - run: make compile
+    - run: make uber
     - name: "Generate tag"
       run: |
         COMMIT_DATE=$(git show -s --format=%cd --date=format:%y%m%d-%H%M HEAD)
@@ -30,7 +31,9 @@ jobs:
     - uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: xapi
-        asset_name: xapi-linux-amd64
+        file: target/xapi.jar
+        asset_name: xapi.jar
+        # file: xapi
+        # asset_name: xapi-linux-amd64
         tag: ${{ env.tag_name }}
         overwrite: true
