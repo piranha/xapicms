@@ -79,10 +79,12 @@
                    "url"
                    (:url hook))
             res  @(http/request (assoc req :url dest))]
-        (store-log! :webhook_log {:webhook_id (:id hook)
-                                  :request    [:lift (select-keys req REQ-LOG)]
-                                  :response   [:lift res]})
-        (log/info "github webhook" res)))))
+        (store-log! :webhook_log
+          {:webhook_id (:id hook)
+           :request    [:lift (select-keys req REQ-LOG)]
+           :response   [:lift (core/update-some res :error pr-str)]})
+        (log/info "sent webhook" (-> (select-keys res [:status :body :error])
+                                     (assoc :url (-> res :opts :url))))))))
 
 
 ;;; Data/Queries
@@ -223,9 +225,7 @@
                         :do-update-set (keys dbpost)
                         :returning     (keys dbpost)})
         post   (dbres->post res)]
-    (if (seq (:repo (auth/user)))
-      (send-webhooks! post)
-      (log/info "user has no repo set, not sending webhook"))
+    (future (send-webhooks! post))
     {:status 200
      :body   {:posts [post]}}))
 

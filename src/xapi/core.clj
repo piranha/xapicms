@@ -1,5 +1,7 @@
 (ns xapi.core
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [clojure.set :as set]
+            [clojure.walk :as walk]))
 
 
 (defn uuid []
@@ -29,3 +31,38 @@
 
 (defn ext [s]
   (subs s (str/last-index-of s ".")))
+
+
+;;; utils
+
+(defn update-some [m k f & args]
+  (if (contains? m k)
+    (apply update m k f args)
+    m))
+
+
+;;; Forms
+
+(defn parse-int-or [s]
+  (if (every? #(Character/isDigit %) s)
+    (Long/parseLong s)
+    s))
+
+
+(defn trans-form
+  "Transform lists of values to a list of maps, like this:
+  {:a.0.b 1 :a.1.b 2} => {:a [{:b 1} {:b 2}]}"
+  [data]
+  (->> (reduce-kv
+         (fn [acc k v]
+           (let [ks (str/split k #"\.")]
+             (if (= (count ks) 1)
+               (assoc acc k v)
+               (assoc-in acc (map parse-int-or ks) v))))
+         {}
+         data)
+       (walk/postwalk (fn [v]
+                        (if (and (map? v)
+                                 (number? (first (keys v))))
+                          (->> v (sort-by first) (mapv second))
+                          v)))))
