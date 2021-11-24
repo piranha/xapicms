@@ -15,20 +15,22 @@
   org.slf4j/slf4j-api             {:mvn/version "1.7.32"}
   org.slf4j/slf4j-simple          {:mvn/version "1.7.32"}
 
-  com.github.seancorfield/next.jdbc {:mvn/version "1.2.737"}
-  org.postgresql/postgresql         {:mvn/version "42.3.0"}
+  ;;com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
+
+  com.github.seancorfield/next.jdbc {:mvn/version "1.2.753"}
+  org.postgresql/postgresql         {:mvn/version "42.3.1"}
   com.github.seancorfield/honeysql  {:mvn/version "2.1.818"}
 
   oauth/oauth.two {:mvn/version "0.4.0"}
 
   com.cognitect.aws/api       {:mvn/version "0.8.524"}
-  com.cognitect.aws/endpoints {:mvn/version "1.1.12.93"}
+  com.cognitect.aws/endpoints {:mvn/version "1.1.12.110"}
   com.cognitect.aws/s3        {:mvn/version "814.2.991.0"}}
 
  :aliases
  {:dev {:extra-deps {nrepl/nrepl                              {:mvn/version "0.8.3"}
                      cider/cider-nrepl                        {:mvn/version "0.27.2"}
-                     refactor-nrepl/refactor-nrepl            {:mvn/version "3.0.0"}
+                     refactor-nrepl/refactor-nrepl            {:mvn/version "3.1.0"}
                      clj-commons/pomegranate                  {:mvn/version "1.2.1"}
                      com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}
                      org.clojure/tools.namespace              {:mvn/version "1.1.0"}}
@@ -42,7 +44,7 @@
                      "-i"
                      "--middleware" "[\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}
 
-  :uber {:deps      {uberdeps/uberdeps {:mvn/version "1.1.0"}}
+  :uber {:deps      {uberdeps/uberdeps {:mvn/version "1.1.1"}}
          :jvm-opts  ["-Dclojure.compiler.direct-linking=true"
                      "-Dclojure.spec.skip-macros=true"
                      "-Djdk.attach.allowAttachSelf"
@@ -54,13 +56,11 @@
 
   :native {:main-opts ["-m" "clj.native-image" "xapi.main"
                        "-H:Name=xapi"
-                       "-H:+TraceClassInitialization"
                        "-H:+ReportExceptionStackTraces"
                        "-H:+RemoveSaturatedTypeFlows"
                        "-H:ResourceConfigurationFiles=resource-config.json"
-                       "--initialize-at-build-time"
                        "--report-unsupported-elements-at-runtime"
-                       "--no-server"]
+                       "--initialize-at-run-time"]
            :jvm-opts  ["-Dclojure.compiler.direct-linking=true"
                        "-Dclojure.spec.skip-macros=true"]
            :extra-deps
