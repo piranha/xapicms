@@ -79,7 +79,9 @@
                      :multipart  true}
          :cookies   true
          :session   {:store (session-cookie/cookie-store
-                              {:key (.getBytes ^String (config/SECRET) "UTF-8")})}
+                              {:key (let [secret (or (config/SECRET)
+                                                     (apply str (repeat 16 "x")))]
+                                      (.getBytes ^String secret "UTF-8"))})}
          :responses {:not-modified-responses true
                      :absolute-redirects     true
                      :content-types          true

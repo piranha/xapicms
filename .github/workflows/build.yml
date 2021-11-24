@@ -1,0 +1,36 @@
+name: xapi CI
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: buildjet-4vcpu-ubuntu-2004
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/cache@v2.1.7
+      with:
+        path: ~/.m2
+        key: m2-${{ hashFiles('**/deps.edn') }}
+        restore-keys: |
+          m2-
+    - uses: DeLaGuardo/setup-graalvm@master
+      with:
+        graalvm-version: '21.3.0.java11'
+    - uses: DeLaGuardo/setup-clojure@master
+      with:
+        tools-deps: '1.10.3.1029'
+    - run: gu install native-image
+    - run: make compile
+    - name: "Generate tag"
+      run: |
+        COMMIT_DATE=$(git show -s --format=%cd --date=format:%y%m%d-%H%M HEAD)
+        echo "tag_name=${COMMIT_DATE}" >> $GITHUB_ENV
+    - uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: xapi
+        asset_name: xapi-linux-amd64
+        tag: ${{ env.tag_name }}
+        overwrite: true
