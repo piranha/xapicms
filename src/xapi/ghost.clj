@@ -90,14 +90,15 @@
 ;;; Data/Queries
 
 (defn make-dbpost [post]
-  (let [slug (or (not-empty (:slug post))
-                 (str (core/uuid)))
+  (let [uuid (core/uuid)
+        slug (or (not-empty (:slug post))
+                 (str uuid))
         html (:html post)]
     {:user_id       (auth/uid)
-     :id            (str (idenc/encode (or (auth/uid) 0)) "__" slug)
+     :id            uuid
+     :uuid          uuid
      :slug          slug
      :title         (not-empty (:title post))
-     :uuid          (core/uuid) ;; Ulysses needs that, but does not use it
      :tags          (when (seq (:tags post))
                       [:array (:tags post)])
      :status        (:status post)
@@ -255,7 +256,7 @@
           (hi/raw
             (format
               "if (location.hash.startsWith('#/editor/')) {
-                 window.location = '/posts/' + location.hash.split('/')[3].replace('__', '/');
+                 window.location = '/posts/' + location.hash.split('/')[3];
                }"))]]]))})
 
 
