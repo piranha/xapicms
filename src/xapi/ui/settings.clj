@@ -116,8 +116,9 @@
                                  :select [:id]})
                 known     (into #{} (map :id (:webhook data)))
                 to-remove (remove known (map :id webhooks))]
-            (db/q {:delete-from :webhook
-                   :where       [:in :id to-remove]})
+            (when (seq to-remove)
+              (db/q {:delete-from :webhook
+                     :where       [:in :id to-remove]}))
             (doseq [hook (:webhook data)]
               (if (:id hook)
                 (db/one {:update :webhook

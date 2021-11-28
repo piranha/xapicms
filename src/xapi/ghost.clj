@@ -14,7 +14,8 @@
             [xapi.auth :as auth]
             [xapi.log :as log]
             [xapi.config :as config]
-            [cheshire.core :as json]))
+            [cheshire.core :as json]
+            [clojure.string :as str]))
 
 
 (set! *warn-on-reflection* true)
@@ -28,7 +29,6 @@
 
 
 ;;; Utils
-
 
 (defn make-tag [tag]
   {:slug tag
@@ -90,26 +90,22 @@
 ;;; Data/Queries
 
 (defn make-dbpost [post]
-  (let [uuid (core/uuid)
-        slug (or (not-empty (:slug post))
-                 (str uuid))
-        html (:html post)]
+  (let [title (not-empty (:title post))]
     {:user_id       (auth/uid)
-     :id            uuid
-     :uuid          uuid
-     :slug          slug
-     :title         (not-empty (:title post))
+     :slug          (or (not-empty (:slug post))
+                        (some-> title core/slug))
+     :html          (:html post)
+     :title         title
      :tags          (when (seq (:tags post))
                       [:array (:tags post)])
      :status        (:status post)
-     :html          html
      :updated_at    (or (some-> (:updated_at post) parse-dt)
                         (Instant/now))
      :published_at  (some-> (:published_at post) parse-dt)
      :feature_image (:feature_image post)}))
 
 
-(def DBPOST-KEYS (delay (keys (make-dbpost nil))))
+(def DBPOST-KEYS (delay (concat [:id :slug :uuid] (keys (make-dbpost nil)))))
 
 
 (defn upsert-image-q [post]
@@ -220,14 +216,19 @@
 (defn upload-post [req]
   (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
 
-  (let [input  (-> req :body :posts first)
-        dbpost (make-dbpost input)
-        res    (db/one {:insert-into   :posts
-                        :values        [dbpost]
-                        :on-conflict   [:user_id :id]
-                        :do-update-set (keys dbpost)
-                        :returning     (keys dbpost)})
-        post   (dbres->post res)]
+  (let [input   (-> req :body :posts first)
+        current (or (db/one (get-post-q (:slug input)))
+                    (let [uuid (core/uuid)]
+                      {:id   uuid
+                       :uuid uuid
+                       :slug uuid}))
+        dbpost  (merge current (make-dbpost input))
+        res     (db/one {:insert-into   :posts
+                         :values        [dbpost]
+                         :on-conflict   [:user_id :id]
+                         :do-update-set (keys dbpost)
+                         :returning     (keys dbpost)})
+        post    (dbres->post res)]
     (future (send-webhooks! post))
     {:status 200
      :body   {:posts [post]}}))
