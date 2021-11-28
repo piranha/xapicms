@@ -167,7 +167,7 @@
      :body   {:tags (mapv #(make-tag (:tag %)) tags)}}))
 
 
-(defn get-file-or-name [orig]
+(defn get-file-or-name [orig hashsum]
   (if-let [file (db/one {:from   [:images]
                          :select [:id
                                   :path
@@ -177,10 +177,12 @@
                                   [:= :id orig]]})]
     file
     {:id   orig
-     :path (format "images/%s/%s/%s/%s"
+     :hash hashsum
+     :path (format "images/%s/%s/%s/%s.%s"
              (idenc/encode (auth/uid))
              (.getYear (LocalDate/now))
              (.getMonthValue (LocalDate/now))
+             hashsum
              orig)}))
 
 
@@ -191,7 +193,7 @@
                       (.update ba))
                     .getValue
                     str)
-        record  (get-file-or-name (:filename file))]
+        record  (get-file-or-name (:filename file) hashsum)]
     (when (not= hashsum (:hash record))
       (let [res (aws/invoke s3 {:op      :PutObject
                                 :request {:Bucket      "xapi"
@@ -200,7 +202,7 @@
                                           :ContentType (:content-type file)
                                           :Body        ba}})]
         (log/info "file upload" {:key (:path record) :res res}))
-      (db/q (upsert-image-q (assoc record :hash hashsum))))
+      (db/q (upsert-image-q record)))
     {:status 200
      :body   {:images [{:url (str "https://images.solovyov.net/" (:path record))}]}}))
 
