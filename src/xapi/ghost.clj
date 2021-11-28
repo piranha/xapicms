@@ -108,15 +108,13 @@
 (def DBPOST-KEYS (delay (concat [:id :slug :uuid] (keys (make-dbpost nil)))))
 
 
-(defn upsert-image-q [post]
-  {:insert-into   :images
-   :values        [{:id         (:id post)
-                    :path       (:path post)
-                    :hash       (:hash post)
-                    :user_id    (auth/uid)
-                    :updated_at (Instant/now)}]
-   :on-conflict   [:user_id :id]
-   :do-update-set [:updated_at :hash :path]})
+(defn insert-image-q [record]
+  {:insert-into :images
+   :values      [{:id         (:id record)
+                  :path       (:path record)
+                  :hash       (:hash record)
+                  :user_id    (auth/uid)
+                  :updated_at (Instant/now)}]})
 
 
 (defn get-post-q [id]
@@ -164,23 +162,13 @@
      :body   {:tags (mapv #(make-tag (:tag %)) tags)}}))
 
 
-(defn get-file-or-name [orig hashsum]
-  (if-let [file (db/one {:from   [:images]
-                         :select [:id
-                                  :path
-                                  :hash]
-                         :where  [:and
-                                  [:= :user_id (auth/uid)]
-                                  [:= :id orig]]})]
-    file
-    {:id   orig
-     :hash hashsum
-     :path (format "images/%s/%s/%s/%s.%s"
-             (idenc/encode (auth/uid))
-             (.getYear (LocalDate/now))
-             (.getMonthValue (LocalDate/now))
-             hashsum
-             orig)}))
+(defn make-file-path [hashsum orig]
+  (format "images/%s/%s/%s/%s.%s"
+    (idenc/encode (auth/uid))
+    (.getYear (LocalDate/now))
+    (.getMonthValue (LocalDate/now))
+    hashsum
+    orig))
 
 
 (defn upload-image [{:keys [params]}]
@@ -190,18 +178,19 @@
                       (.update ba))
                     .getValue
                     str)
-        record  (get-file-or-name (:filename file) hashsum)]
-    (when (not= hashsum (:hash record))
-      (let [res (aws/invoke s3 {:op      :PutObject
-                                :request {:Bucket      "xapi"
-                                          :Key         (:path record)
-                                          :ACL         "public-read"
-                                          :ContentType (:content-type file)
-                                          :Body        ba}})]
-        (log/info "file upload" {:key (:path record) :res res}))
-      (db/q (upsert-image-q record)))
+        record  {:id   (core/uuid)
+                 :hash hashsum
+                 :path (make-file-path hashsum (:filename file))}]
+    (let [res (aws/invoke s3 {:op      :PutObject
+                              :request {:Bucket      "xapi"
+                                        :Key         (:path record)
+                                        :ACL         "public-read"
+                                        :ContentType (:content-type file)
+                                        :Body        ba}})]
+      (log/info "file upload" {:key (:path record) :res res}))
+    (db/q (insert-image-q record))
     {:status 200
-     :body   {:images [{:url (str "https://images.solovyov.net/" (:path record))}]}}))
+     :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}}))
 
 
 (defn dbres->post [post]
