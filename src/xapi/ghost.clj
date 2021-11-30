@@ -206,11 +206,12 @@
   (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
 
   (let [input   (-> req :body :posts first)
-        current (or (db/one (get-post-q (:slug input)))
-                    (let [uuid (core/uuid)]
-                      {:id   uuid
-                       :uuid uuid
-                       :slug uuid}))
+        current (merge
+                  (let [uuid (core/uuid)]
+                    {:id   uuid
+                     :uuid uuid
+                     :slug uuid})
+                  (db/one (get-post-q (:slug input))))
         dbpost  (merge current (make-dbpost input))
         res     (db/one {:insert-into   :posts
                          :values        [dbpost]
