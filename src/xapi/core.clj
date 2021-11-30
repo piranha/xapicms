@@ -41,6 +41,14 @@
     m))
 
 
+(defn remove-nils [m]
+  (reduce-kv (fn [acc k v]
+               (when v
+                 (assoc acc k v)))
+    {}
+    m))
+
+
 ;;; Forms
 
 (defn parse-int-or [s]

@@ -91,18 +91,19 @@
 
 (defn make-dbpost [post]
   (let [title (not-empty (:title post))]
-    {:user_id       (auth/uid)
-     :slug          (or (not-empty (:slug post))
-                        (some-> title core/slug))
-     :html          (:html post)
-     :title         title
-     :tags          (when (seq (:tags post))
-                      [:array (:tags post)])
-     :status        (:status post)
-     :updated_at    (or (some-> (:updated_at post) parse-dt)
-                        (Instant/now))
-     :published_at  (some-> (:published_at post) parse-dt)
-     :feature_image (:feature_image post)}))
+    (core/remove-nils
+      {:user_id       (auth/uid)
+       :slug          (or (not-empty (:slug post))
+                          (some-> title core/slug))
+       :html          (:html post)
+       :title         title
+       :tags          (when (seq (:tags post))
+                        [:array (:tags post)])
+       :status        (:status post)
+       :updated_at    (or (some-> (:updated_at post) parse-dt)
+                          (Instant/now))
+       :published_at  (some-> (:published_at post) parse-dt)
+       :feature_image (:feature_image post)})))
 
 
 (def DBPOST-KEYS (delay (concat [:id :slug :uuid] (keys (make-dbpost nil)))))
@@ -206,7 +207,8 @@
   (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
 
   (let [input   (-> req :body :posts first)
-        current (or (db/one (get-post-q (:slug input)))
+        current (or (when-let [slug (:slug input)]
+                      (db/one (get-post-q slug)))
                     (let [uuid (core/uuid)]
                       {:id   uuid
                        :uuid uuid
