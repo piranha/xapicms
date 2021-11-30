@@ -128,6 +128,26 @@
              [:= :slug id]]]})
 
 
+(defn dbres->post [post]
+  (-> post
+      (update :tags #(mapv make-tag %))
+      (dissoc :user_id)
+      (assoc :url (format "/posts/%s/%s"
+                    (idenc/encode (:user_id post))
+                    (:slug post)))))
+
+
+(defn input->dbpost [input]
+  (let [current (or (when-let [slug (:slug input)]
+                      (db/one (get-post-q slug)))
+                    (let [uuid (core/uuid)]
+                      {:id   uuid
+                       :uuid uuid
+                       :slug uuid}))
+        dbpost  (make-dbpost input)]
+    (merge current dbpost)))
+
+
 ;;; Resources
 
 (defn login [req]
@@ -194,32 +214,17 @@
      :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}}))
 
 
-(defn dbres->post [post]
-  (-> post
-      (update :tags #(mapv make-tag %))
-      (dissoc :user_id)
-      (assoc :url (format "/posts/%s/%s"
-                    (idenc/encode (:user_id post))
-                    (:slug post)))))
-
-
 (defn upload-post [req]
   (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
 
-  (let [input   (-> req :body :posts first)
-        current (or (when-let [slug (:slug input)]
-                      (db/one (get-post-q slug)))
-                    (let [uuid (core/uuid)]
-                      {:id   uuid
-                       :uuid uuid
-                       :slug uuid}))
-        dbpost  (merge current (make-dbpost input))
-        res     (db/one {:insert-into   :posts
-                         :values        [dbpost]
-                         :on-conflict   [:user_id :id]
-                         :do-update-set (keys dbpost)
-                         :returning     (keys dbpost)})
-        post    (dbres->post res)]
+  (let [input  (-> req :body :posts first)
+        dbpost (input->dbpost input)
+        res    (db/one {:insert-into   :posts
+                        :values        [dbpost]
+                        :on-conflict   [:user_id :id]
+                        :do-update-set (keys dbpost)
+                        :returning     (keys dbpost)})
+        post   (dbres->post res)]
     (future (send-webhooks! post))
     {:status 200
      :body   {:posts [post]}}))
