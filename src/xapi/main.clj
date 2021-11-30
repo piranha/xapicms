@@ -4,6 +4,7 @@
             [org.httpkit.server :as httpkit]
             [org.httpkit.client :as http]
             [org.httpkit.sni-client :as sni-client]
+            [sentry-clj.core :as sentry]
 
             [xapi.log :as log]
             [xapi.config :as config]
@@ -20,6 +21,11 @@
            (log/info "Starting" {:port (config/PORT)})
            (httpkit/run-server (app/make-app) {:port (config/PORT)}))
   :stop (server))
+
+
+(mount/defstate sentry
+  :start (sentry/init! (config/SENTRY)
+           {:enable-uncaught-exception-handler true}))
 
 
 (defn -main [& args]

@@ -29,3 +29,5 @@
                  "GHSECRET env var is empty, please set to Github app OAuth secret"))
 (def SECRET   #(get-env "SECRET"
                  "SECRET key to sign session cookies and other"))
+(def SENTRY   #(get-env "SENTRY"
+                 "Sentry DSN"))

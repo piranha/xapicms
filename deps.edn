@@ -14,6 +14,7 @@
   cljstache/cljstache             {:mvn/version "2.0.6"}
   org.slf4j/slf4j-api             {:mvn/version "1.7.32"}
   org.slf4j/slf4j-simple          {:mvn/version "1.7.32"}
+  io.sentry/sentry-clj            {:mvn/version "5.3.159"}
 
   ;;com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
 

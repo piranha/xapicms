@@ -6,6 +6,7 @@
             [ring.util.response :as response]
             [reitit.core :as reitit]
             [cheshire.generate]
+            [sentry-clj.ring :as sentry]
 
             [xapi.log :as log]
             [xapi.config :as config]
@@ -83,4 +84,5 @@
          :responses {:not-modified-responses true
                      :absolute-redirects     true
                      :content-types          true
-                     :default-charset        "utf-8"}})))
+                     :default-charset        "utf-8"}})
+      (sentry/wrap-report-exceptions nil)))
