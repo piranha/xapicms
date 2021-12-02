@@ -16,6 +16,7 @@
 (t/deftest generate-valid-post
   (t/testing "Incoming new post should generate correct data to insert into DB"
     (let [dbpost (g/input->dbpost NEW-POST-INPUT)]
+      (prn dbpost)
       (t/are [y] (some? y)
         (:slug dbpost)
         (:id dbpost)

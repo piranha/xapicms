@@ -91,19 +91,18 @@
 
 (defn make-dbpost [post]
   (let [title (not-empty (:title post))]
-    (core/remove-nils
-      {:user_id       (auth/uid)
-       :slug          (or (not-empty (:slug post))
-                          (some-> title core/slug))
-       :html          (:html post)
-       :title         title
-       :tags          (when (seq (:tags post))
-                        [:array (:tags post)])
-       :status        (:status post)
-       :updated_at    (or (some-> (:updated_at post) parse-dt)
-                          (Instant/now))
-       :published_at  (some-> (:published_at post) parse-dt)
-       :feature_image (:feature_image post)})))
+    {:user_id       (auth/uid)
+     :slug          (or (not-empty (:slug post))
+                        (some-> title core/slug))
+     :html          (:html post)
+     :title         title
+     :tags          (when (seq (:tags post))
+                      [:array (:tags post)])
+     :status        (:status post)
+     :updated_at    (or (some-> (:updated_at post) parse-dt)
+                        (Instant/now))
+     :published_at  (some-> (:published_at post) parse-dt)
+     :feature_image (:feature_image post)}))
 
 
 (def DBPOST-KEYS (delay (concat [:id :slug :uuid] (keys (make-dbpost nil)))))
@@ -144,7 +143,7 @@
                       {:id   uuid
                        :uuid uuid
                        :slug uuid}))
-        dbpost  (make-dbpost input)]
+        dbpost  (core/remove-nils (make-dbpost input))]
     (merge current dbpost)))
 
 
