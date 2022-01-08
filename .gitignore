@@ -1,7 +1,6 @@
 /.config.mk
 /target/
 /classes/
-/gach
 /.cpcache/
 /.nrepl-port
-/gach.private-key.pem
+/.clj-kondo/.cache

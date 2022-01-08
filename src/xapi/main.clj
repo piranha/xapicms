@@ -8,7 +8,8 @@
 
             [xapi.log :as log]
             [xapi.config :as config]
-            [xapi.app :as app]))
+            [xapi.app :as app]
+            xapi.cron))
 
 
 (set! *warn-on-reflection* true)

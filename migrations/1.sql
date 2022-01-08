@@ -41,6 +41,9 @@ create table posts (
   primary key(user_id, id)
 );
 
+create unique index posts_uuid on posts (uuid);
+
+
 create table post_log (
   id serial primary key,
   user_id int not null references users (id),
