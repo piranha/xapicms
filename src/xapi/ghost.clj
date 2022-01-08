@@ -129,11 +129,9 @@
 
 (defn dbres->post [post]
   (-> post
-      (update :tags #(mapv make-tag %))
       (dissoc :user_id)
-      (assoc :url (format "/posts/%s/%s"
-                    (idenc/encode (:user_id post))
-                    (:slug post)))))
+      (update :tags #(mapv make-tag %))
+      (assoc :url (format "/p/%s" (:id post)))))
 
 
 (defn input->dbpost [input]
@@ -151,7 +149,7 @@
 
 (defn login [req]
   (let [{:keys [username password]} (:body req)
-        user (auth/by-email username password)]
+        user (auth/by-email (str/trim username) (str/trim password))]
     (if user
       {:status  201
        :headers {"set-cookie" (format "ghost-admin-api-session=%s; Path=/ghost; Expires=Mon, 26 Aug 2119 19:14:07 GMT; SameSite=Lax"
@@ -164,7 +162,7 @@
   (let [user (auth/user)]
     {:status 200
      :body   {:site
-              {:title (str "Blog of " (:name user))}}}))
+              {:title (str "*DEV* Blog of " (:name user))}}}))
 
 
 (defn me [_req]
@@ -233,8 +231,9 @@
   (if (= (:request-method req) :put)
     (upload-post req)
     (if-let [res (db/one (get-post-q id))]
-      {:status 200
-       :body   {:posts [(dbres->post res)]}}
+      (do
+        {:status 200
+         :body   {:posts [(dbres->post res)]}})
       {:status 422 ;; really, Ghost?
        :body   {:errors [{:message "Post not found"}]}})))
 
@@ -251,8 +250,8 @@
          [:script
           (hi/raw
             (format
-              "if (location.hash.startsWith('#/editor/')) {
-                 window.location = '/posts/' + location.hash.split('/')[3];
+              "if (location.hash.startsWith('#/editor/post/')) {
+                 window.location = '/p/' + location.hash.split('/editor/post/')[1] + '/';
                }"))]]]))})
 
 

@@ -3,17 +3,13 @@
             [hiccup2.core :as hi]
 
             [xapi.core.db :as db]
-            [xapi.core.idenc :as idenc]
             [xapi.ui.base :as base]))
 
 
-(defn post [{{:keys [id slug]} :path-params headers :headers}]
+(defn post [{{:keys [id]} :path-params headers :headers}]
   (let [res (db/one {:from   [:posts]
                      :select [:*]
-                     :where  [:and
-                              [:= :user_id (idenc/decode id)]
-                              [:= :slug slug]]})]
-
+                     :where  [:= :id id]})]
     (cond
       (nil? res)
       {:status 404
