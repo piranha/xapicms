@@ -162,7 +162,9 @@
   (let [user (auth/user)]
     {:status 200
      :body   {:site
-              {:title (str "*DEV* Blog of " (:name user))}}}))
+              {:title (if (config/DEV)
+                        (str "*DEV* Blog of " (:name user))
+                        (str "Blog of " (:name user)))}}}))
 
 
 (defn me [_req]
@@ -231,9 +233,8 @@
   (if (= (:request-method req) :put)
     (upload-post req)
     (if-let [res (db/one (get-post-q id))]
-      (do
-        {:status 200
-         :body   {:posts [(dbres->post res)]}})
+      {:status 200
+       :body   {:posts [(dbres->post res)]}}
       {:status 422 ;; really, Ghost?
        :body   {:errors [{:message "Post not found"}]}})))
 

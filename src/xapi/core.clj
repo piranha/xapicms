@@ -1,7 +1,8 @@
 (ns xapi.core
   (:require [clojure.string :as str]
             [clojure.set :as set]
-            [clojure.walk :as walk]))
+            [clojure.walk :as walk]
+            [sentry-clj.core :as sentry]))
 
 
 (defn uuid []
@@ -75,3 +76,12 @@
                                  (number? (first (keys v))))
                           (->> v (sort-by first) (mapv second))
                           v)))))
+
+;;; Exceptions
+
+(defmacro report-exc [msg & body]
+  `(try
+     ~@body
+     (catch Exception e#
+       (sentry/send-event {:message   ~msg
+                           :throwable e#}))))

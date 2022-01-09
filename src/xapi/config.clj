@@ -12,9 +12,13 @@
        default
        (binding [*out* *err*]
          (println desc)
+         (flush)
          (System/exit 1)))))
 
 
+(def DEV      #(-> (get-env "ENV" "dev"
+                     "ENV set an app environment, dev/prod")
+                   (not= "prod")))
 (def PORT     #(-> (get-env "PORT" "1298"
                      "PORT to start on")
                    str/trim

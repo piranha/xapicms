@@ -76,7 +76,7 @@
 
 
 (defn -app [req]
-  (let [router   (if true               ; dev
+  (let [router   (if (config/DEV)
                    (dev-router)
                    prod-router)
         m        (reitit/match-by-path router (:uri req))

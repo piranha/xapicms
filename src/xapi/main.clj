@@ -19,7 +19,7 @@
 
 (mount/defstate server
   :start (do
-           (log/info "Starting" {:port (config/PORT)})
+           (log/info "Starting HTTP server" {:port (config/PORT)})
            (httpkit/run-server (app/make-app) {:port (config/PORT)}))
   :stop (server))
 
@@ -30,5 +30,5 @@
 
 
 (defn -main [& args]
-  (mount/start)
+  (log/info "Starting up processes" (mount/start))
   (println "Started on port" (config/PORT)))
