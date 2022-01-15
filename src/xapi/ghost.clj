@@ -81,7 +81,8 @@
             res  @(http/request (assoc req :url dest))]
         (store-log! :webhook_log
           {:webhook_id (:id hook)
-           :request    [:lift (select-keys req REQ-LOG)]
+           :request    [:lift (-> (select-keys req REQ-LOG)
+                                  (update :headers dissoc "Authorization"))]
            :response   [:lift (core/update-some res :error pr-str)]})
         (log/info "sent webhook" (-> (select-keys res [:status :body :error])
                                      (assoc :url (-> res :opts :url))))))))

@@ -113,7 +113,6 @@
          :session   {:store (session-cookie/cookie-store
                               {:key (.getBytes ^String (config/SECRET) "UTF-8")})}
          :responses {:not-modified-responses true
-                     :absolute-redirects     true
                      :content-types          true
                      :default-charset        "utf-8"}})
       (sentry/wrap-report-exceptions nil)))
