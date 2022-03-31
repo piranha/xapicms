@@ -71,7 +71,6 @@
 
 ;;; extensions
 
-
 (defn <-pgobject
   "Transform PGobject containing `json` or `jsonb` value to Clojure
   data."
