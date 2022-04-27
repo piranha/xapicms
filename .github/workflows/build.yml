@@ -20,7 +20,7 @@ jobs:
     #     graalvm-version: '21.3.0.java11'
     - uses: DeLaGuardo/setup-clojure@master
       with:
-        tools-deps: '1.11.0.1100'
+        cli: '1.11.1.1113'
     # - run: gu install native-image
     # - run: make compile
     - run: make uber
@@ -28,12 +28,8 @@ jobs:
       run: |
         COMMIT_DATE=$(git show -s --format=%cd --date=format:%y%m%d-%H%M HEAD)
         echo "tag_name=${COMMIT_DATE}" >> $GITHUB_ENV
-    - uses: svenstaro/upload-release-action@v2
+    - name: Publish release
+      uses: softprops/action-gh-release@v1
       with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: target/xapi.jar
-        asset_name: xapi.jar
-        # file: xapi
-        # asset_name: xapi-linux-amd64
-        tag: ${{ env.tag_name }}
-        overwrite: true
+        files: target/xapi.jar
+        tag_name: ${{ env.tag_name }}

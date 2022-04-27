@@ -1,10 +1,10 @@
 {:paths ["src" "resources" "test"]
  :deps
- {org.clojure/clojure             {:mvn/version "1.11.0"}
+ {org.clojure/clojure             {:mvn/version "1.11.1"}
   ring/ring-core                  {:mvn/version "1.9.5"}
   ring/ring-json                  {:mvn/version "0.5.1"}
   ring/ring-defaults              {:mvn/version "0.3.3"}
-  metosin/reitit-core             {:mvn/version "0.5.17"}
+  metosin/reitit-core             {:mvn/version "0.5.18"}
   metosin/malli                   {:mvn/version "0.8.4"}
   javax.servlet/javax.servlet-api {:mvn/version "4.0.1"}
   http-kit/http-kit               {:mvn/version "2.6.0-alpha1"}
@@ -12,13 +12,13 @@
   hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
   org.slf4j/slf4j-api             {:mvn/version "1.7.36"}
   org.slf4j/slf4j-simple          {:mvn/version "1.7.36"}
-  io.sentry/sentry-clj            {:mvn/version "5.7.171"}
+  io.sentry/sentry-clj            {:mvn/version "5.7.178"}
 
   ;;com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
 
-  com.github.seancorfield/next.jdbc {:mvn/version "1.2.772"}
-  org.postgresql/postgresql         {:mvn/version "42.3.3"}
-  com.github.seancorfield/honeysql  {:mvn/version "2.2.868"}
+  com.github.seancorfield/next.jdbc {:mvn/version "1.2.780"}
+  org.postgresql/postgresql         {:mvn/version "42.3.4"}
+  com.github.seancorfield/honeysql  {:mvn/version "2.2.891"}
 
   oauth/oauth.two  {:mvn/version "0.4.0"
                     :exclusions  [prismatic/schema]}
@@ -26,8 +26,8 @@
   prismatic/schema {:mvn/version "1.2.0"}
 
   com.cognitect.aws/api       {:mvn/version "0.8.539"}
-  com.cognitect.aws/endpoints {:mvn/version "1.1.12.186"}
-  com.cognitect.aws/s3        {:mvn/version "820.2.1083.0"}}
+  com.cognitect.aws/endpoints {:mvn/version "1.1.12.206"}
+  com.cognitect.aws/s3        {:mvn/version "822.2.1109.0"}}
 
  :aliases
  {:dev {:extra-deps {nrepl/nrepl                              {:mvn/version "0.9.0"}
