@@ -7,11 +7,16 @@
 
 
 (defn post [{{:keys [id]} :path-params headers :headers}]
-  (let [res (db/one {:from   [:posts]
-                     :select [:*]
-                     :where  [:= :id id]})]
+  (let [post  (db/one {:from   [:posts]
+                       :select [:*]
+                       :where  [:= :id id]})
+        hooks (db/q {:from     [:webhook_log]
+                     :select   [:*]
+                     :where    [:= :post_uuid (:uuid post)]
+                     :order-by [[:id :desc]]
+                     :limit    10})]
     (cond
-      (nil? res)
+      (nil? post)
       {:status 404
        :body   "Not Found"}
 
@@ -22,22 +27,26 @@
        (base/wrap
          [:article
           [:header
-           (when (:feature_image res)
-             [:img {:src (:feature_image res)}])
+           (when (:feature_image post)
+             [:img {:src (:feature_image post)}])
 
-           (when (or (:title res)
-                     (= (:status res) "draft"))
-             [:h1 (:title res)
-              (when (= (:status res) "draft")
+           (when (or (:title post)
+                     (= (:status post) "draft"))
+             [:h1 (:title post)
+              (when (= (:status post) "draft")
                 [:sup " (DRAFT)"])])
 
-           [:i.float-right "Tags: " (str/join ", " (:tags res))]]
+           [:i.float-right "Tags: " (str/join ", " (:tags post))]]
 
-          [:main#post (hi/raw (:html res))]
+          [:main#post (hi/raw (:html post))]
 
-          [:time.float-right (str (:updated_at res))]])}
+          [:time.float-right (str (:updated_at post))]
+
+          [:footer
+           (for [hook hooks]
+             [:p (-> hook :response :opts :url) " " (-> hook :response :body)])]])}
 
       :else
       {:status  200
        :headers {"Content-Type" "application/json"}
-       :body    res})))
+       :body    post})))

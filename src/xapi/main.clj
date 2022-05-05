@@ -17,11 +17,11 @@
 (alter-var-root #'http/*default-client* (fn [_] sni-client/default-client))
 
 
-(mount/defstate server
+(mount/defstate httpd
   :start (do
            (log/info "Starting HTTP server" {:port (config/PORT)})
            (httpkit/run-server (app/make-app) {:port (config/PORT)}))
-  :stop (server))
+  :stop (httpd))
 
 
 (mount/defstate sentry

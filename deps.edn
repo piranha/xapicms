@@ -17,13 +17,13 @@
   ;;com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
 
   com.github.seancorfield/next.jdbc {:mvn/version "1.2.780"}
-  org.postgresql/postgresql         {:mvn/version "42.3.4"}
+  org.postgresql/postgresql         {:mvn/version "42.3.5"}
   com.github.seancorfield/honeysql  {:mvn/version "2.2.891"}
 
   oauth/oauth.two  {:mvn/version "0.4.0"
                     :exclusions  [prismatic/schema]}
   ;; for oauth.two
-  prismatic/schema {:mvn/version "1.2.0"}
+  prismatic/schema {:mvn/version "1.2.1"}
 
   com.cognitect.aws/api       {:mvn/version "0.8.539"}
   com.cognitect.aws/endpoints {:mvn/version "1.1.12.206"}
@@ -42,6 +42,7 @@
                      "-XX:+UnlockDiagnosticVMOptions"
                      "-XX:+DebugNonSafepoints"]
         :main-opts  ["-i" "dev/user.clj"
+                     "-e" "(mount/start)"
                      "-m" "nrepl.cmdline"
                      "-i"
                      "--middleware" "[\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}

@@ -1,6 +1,7 @@
 (ns xapi.config
   (:require [clojure.string :as str]))
 
+
 (set! *warn-on-reflection* true)
 
 
@@ -10,9 +11,10 @@
   ([var-name default desc]
    (or (some-> (System/getenv var-name) str/trim)
        default
-       (binding [*out* *err*]
-         (println desc)
-         (flush)
+       (do
+         (. (Runtime/getRuntime) addShutdownHook
+           (Thread. #(binding [*out* *err*]
+                       (println desc))))
          (System/exit 1)))))
 
 

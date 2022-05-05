@@ -2,6 +2,7 @@
   (:require [malli.core :as m]
             [malli.transform :as mt]
             [malli.error :as me]
+            [hiccup2.core :as hi]
 
             [xapi.auth :as auth]
             [xapi.core :as core]
@@ -12,28 +13,35 @@
 
 (defn webhook-row [prefix hook]
   (let [gh? (= (:type hook) "github")]
-    [:fieldset.row
-     [:input {:name (str prefix ".id") :type "hidden" :value (:id hook)}]
-     [:legend "Webhook"]
-     [:label.col-1
-      "Type"
-      [:select {:name (str prefix ".type")}
-       [:option {:value    "url"
-                 :selected (not gh?)} "URL"]
-       [:option {:value    "github"
-                 :selected gh?} "Github"]]]
-     [:label.col
-      (if gh? "Repo" "URL")
-      [:input {:name  (str prefix ".url")
-               :type  "text"
-               :value (:url hook)}]]
-     [:div.col-1
-      [:a {:href "#" :ts-action "prevent, remove 'parent fieldset'"} "❌"]
-      [:br]
-      [:input {:name    (str prefix ".enabled")
-               :type    "checkbox"
-               :value   "true"
-               :checked (:enabled hook true)}]]]))
+    (hi/html
+      [:fieldset.row
+       [:input {:name (str prefix ".id") :type "hidden" :value (:id hook)}]
+       [:legend "Webhook"]
+       [:label.col-1
+        "Type"
+        [:select {:name (str prefix ".type")}
+         [:option {:value    "url"
+                   :selected (not gh?)} "URL"]
+         [:option {:value    "github"
+                   :selected gh?} "Github"]]]
+       [:label.col
+        (if gh? "Repo" "URL")
+        [:input {:name  (str prefix ".url")
+                 :type  "text"
+                 :value (:url hook)}]]
+       [:div.col-1
+        [:a {:href "#" :ts-action "prevent, remove 'parent fieldset'"} "❌"]
+        [:br]
+        [:input {:name    (str prefix ".enabled")
+                 :type    "checkbox"
+                 :value   "true"
+                 :checked (:enabled hook true)}]]])))
+
+
+(defn post-title [post]
+  (str
+    (when (= (:status post) "draft") "(draft) ")
+    (or (:title post) (:uuid post))))
 
 
 (defn index [_req]
@@ -47,15 +55,16 @@
      :body
      (if user
        (base/wrap
-         [:p
-          "You can now post stuff. Connect using those settings:"]
-         [:table
-          [:tr [:td "Host"] [:td [:code (config/DOMAIN)]]]
-          [:tr [:td "Email"] [:td [:code (:email user)]]]
-          [:tr [:td "Password"] [:td [:code (:apikey user)]]]]
+         [:details
+          [:summary
+           "You can now post stuff. Connect using those settings:"]
+          [:table
+           [:tr [:td "Host"] [:td [:code (config/DOMAIN)]]]
+           [:tr [:td "Email"] [:td [:code (:email user)]]]
+           [:tr [:td "Password"] [:td [:code (:apikey user)]]]]]
 
-         [:article
-          [:header
+         [:details
+          [:summary
            [:h4 "Settings"]]
 
           [:form {:method "post" :action "/settings"}
@@ -71,7 +80,18 @@
 
            [:hr]
 
-           [:button {:name "save"} "Save"]]])
+           [:button {:name "save"} "Save"]]]
+
+         [:article
+          [:header
+           [:h4 "Posts"]
+
+           (for [post (db/q {:from     [:posts]
+                             :select   [:*]
+                             :where    [:= :user_id (:id user)]
+                             :order_by [[:created_at :desc]]})]
+             [:p [:a {:href (str "/p/" (:id post))} (post-title post)]])]])
+
        (base/wrap
          [:a {:href "/oauth"} "Start login"]))}))
 

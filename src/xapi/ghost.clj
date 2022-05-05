@@ -78,9 +78,10 @@
 
                    "url"
                    (:url hook))
-            res  @(http/request (assoc req :url dest))]
+            res @(http/request (assoc req :url dest))]
         (store-log! :webhook_log
           {:webhook_id (:id hook)
+           :post_uuid  (:uuid post)
            :request    [:lift (-> (select-keys req REQ-LOG)
                                   (update :headers dissoc "Authorization"))]
            :response   [:lift (core/update-some res :error pr-str)]})
