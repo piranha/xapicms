@@ -3,18 +3,20 @@
             [hiccup2.core :as hi]
 
             [xapi.core.db :as db]
-            [xapi.ui.base :as base]))
+            [xapi.ui.base :as base]
+            [xapi.auth :as auth]))
 
 
 (defn post [{{:keys [id]} :path-params headers :headers}]
   (let [post  (db/one {:from   [:posts]
                        :select [:*]
                        :where  [:= :id id]})
-        hooks (db/q {:from     [:webhook_log]
-                     :select   [:*]
-                     :where    [:= :post_uuid (:uuid post)]
-                     :order-by [[:id :desc]]
-                     :limit    10})]
+        hooks (when (= (:user_id post) (:id (auth/user)))
+                (db/q {:from     [:webhook_log]
+                       :select   [:*]
+                       :where    [:= :post_uuid (:uuid post)]
+                       :order-by [[:id :desc]]
+                       :limit    10}))]
     (cond
       (nil? post)
       {:status 404
@@ -42,9 +44,10 @@
 
           [:time.float-right (str (:updated_at post))]
 
-          [:footer
-           (for [hook hooks]
-             [:p (-> hook :response :opts :url) " " (-> hook :response :body)])]])}
+          (when (seq hooks)
+            [:footer
+             (for [hook hooks]
+               [:p (-> hook :response :opts :url) " " (-> hook :response :body)])])])}
 
       :else
       {:status  200
