@@ -89,7 +89,7 @@
            (for [post (db/q {:from     [:posts]
                              :select   [:*]
                              :where    [:= :user_id (:id user)]
-                             :order_by [[:created_at :desc]]})]
+                             :order-by [[:created_at :desc]]})]
              [:p [:a {:href (str "/p/" (:id post))} (post-title post)]])]])
 
        (base/wrap
