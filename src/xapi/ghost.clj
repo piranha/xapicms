@@ -254,7 +254,7 @@
           (hi/raw
             (format
               "if (location.hash.startsWith('#/editor/post/')) {
-                 window.location = '/p/' + location.hash.split('/editor/post/')[1] + '/';
+                 window.location = '/p/' + location.hash.split('/editor/post/')[1];
                }"))]]]))})
 
 
