@@ -23,9 +23,9 @@
 
 (def REQ-LOG [:request-method :uri :query-string :headers :body])
 (def BASE "resources/public/")
-(def s3 (aws/client {:api               :s3
-                     :region            "us-east-1"
-                     :endpoint-override {:hostname "s3.wasabisys.com"}}))
+(def s3 (aws/client {:api :s3
+                     :endpoint-override
+                     {:hostname "s3.us-west-001.backblazeb2.com"}}))
 
 
 ;;; Utils
@@ -204,7 +204,7 @@
                  :hash hashsum
                  :path (make-file-path hashsum (:filename file))}]
     (let [res (aws/invoke s3 {:op      :PutObject
-                              :request {:Bucket      "xapi"
+                              :request {:Bucket      "xapicms"
                                         :Key         (:path record)
                                         :ACL         "public-read"
                                         :ContentType (:content-type file)
@@ -247,6 +247,7 @@
    :body
    (str
      (hi/html
+       (hi/raw "<!DOCTYPE html>\n")
        [:html
         [:head [:title "Redirecting..."]]
         [:body
