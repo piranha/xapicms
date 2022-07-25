@@ -3,8 +3,8 @@
            [java.util.zip Adler32]
            [java.time ZonedDateTime]
            [java.time.format DateTimeFormatter])
-  (:require [cognitect.aws.client.api :as aws]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
+            [cognitect.aws.client.api :as aws]
             [org.httpkit.client :as http]
             [hiccup2.core :as hi]
 
@@ -209,10 +209,14 @@
                                         :ACL         "public-read"
                                         :ContentType (:content-type file)
                                         :Body        ba}})]
-      (log/info "file upload" {:key (:path record) :res res}))
-    (db/q (insert-image-q record))
-    {:status 200
-     :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}}))
+      (log/info "file upload" {:key (:path record) :res res})
+      (if (:cognitect.anomalies/category res)
+        {:status 400
+         :body (:cognitect.aws.util/throwable res)}
+        (do
+          (db/q (insert-image-q record))
+          {:status 200
+           :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}})))))
 
 
 (defn upload-post [req]
