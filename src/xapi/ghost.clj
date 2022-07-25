@@ -23,8 +23,15 @@
 
 (def REQ-LOG [:request-method :uri :query-string :headers :body])
 (def BASE "resources/public/")
-(def s3 (aws/client {:api               :s3
-                     :endpoint-override {:hostname (config/AWS-HOSTNAME)}}))
+(def s3 (aws/client {:api    :s3
+                     ;; any existing region from AWS should be here since in
+                     ;; other case
+                     ;; `cognitect.aws.endpoint/default-endpoint-provider` is
+                     ;; not able to return any data
+                     :region "us-east-1"
+                     :endpoint-override
+                     {:hostname "s3.us-west-001.backblazeb2.com"
+                      :region   "us-west-001"}}))
 
 
 ;;; Utils

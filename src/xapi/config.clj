@@ -37,5 +37,3 @@
                  "SECRET key to sign session cookies and other"))
 (def SENTRY   #(get-env "SENTRY"
                  "Sentry DSN"))
-(def AWS-HOSTNAME #(get-env "AWS_HOSTNAME" "s3.us-west-001.backblazeb2.com"
-                     "AWS hostname"))
