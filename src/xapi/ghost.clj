@@ -23,9 +23,8 @@
 
 (def REQ-LOG [:request-method :uri :query-string :headers :body])
 (def BASE "resources/public/")
-(def s3 (aws/client {:api :s3
-                     :endpoint-override
-                     {:hostname "s3.us-west-001.backblazeb2.com"}}))
+(def s3 (aws/client {:api               :s3
+                     :endpoint-override {:hostname (config/AWS-HOSTNAME)}}))
 
 
 ;;; Utils
