@@ -211,7 +211,8 @@
       (log/info "file upload" {:key (:path record) :res res})
       (if (:cognitect.anomalies/category res)
         {:status 400
-         :body   (str (:cognitect.aws.util/throwable res))}
+         :body   (or (:cognitect.anomalies/message res)
+                     (str (:cognitect.aws.util/throwable res)))}
         (do
           (db/q (insert-image-q record))
           {:status 200
