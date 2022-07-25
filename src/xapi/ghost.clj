@@ -30,8 +30,7 @@
                      ;; not able to return any data
                      :region "us-east-1"
                      :endpoint-override
-                     {:hostname "s3.us-west-001.backblazeb2.com"
-                      :region   "us-west-001"}}))
+                     {:hostname "s3.us-west-001.backblazeb2.com"}}))
 
 
 ;;; Utils
