@@ -54,7 +54,9 @@
    ["/p/:id" ui.post/post]
    ["/static/{*path}" static]
    ["/settings" ui.settings/form]
-   ["/favicon.ico" h404]
+   ["/favicon.ico" (fn [_]
+                     (-> (response/resource-response "public/favicon.png")
+                         (assoc-in [:headers "content-type"] "image/png")))]
    ["/oauth" auth/start]
    ["/oauth/github" auth/github-cb]
    ["/xmlrpc.php" mwb/dispatch]
