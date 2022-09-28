@@ -14,6 +14,7 @@
      [:meta {:name "viewport" :content "width=device-width, initial-scale=1"}]
 
      [:link {:rel "stylesheet" :href "https://classless.de/classless.css"}]
+     [:link {:rel "stylesheet" :href "/static/custom.css"}]
      [:link {:rel "icon" :type "image/png" :href "/favicon.ico"}]
      ;;[:link {:rel "stylesheet" :href "https://unpkg.com/chota@latest"}]
      [:script {:src "/static/twinspark.js"}]]))
