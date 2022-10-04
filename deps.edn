@@ -1,41 +1,41 @@
 {:paths ["src" "resources" "test"]
  :deps
  {org.clojure/clojure             {:mvn/version "1.11.1"}
-  ring/ring-core                  {:mvn/version "1.9.5"}
+  ring/ring-core                  {:mvn/version "1.9.6"}
   ring/ring-json                  {:mvn/version "0.5.1"}
-  ring/ring-defaults              {:mvn/version "0.3.3"}
+  ring/ring-defaults              {:mvn/version "0.3.4"}
   metosin/reitit-core             {:mvn/version "0.5.18"}
-  metosin/malli                   {:mvn/version "0.8.4"}
+  metosin/malli                   {:mvn/version "0.8.9"}
   javax.servlet/javax.servlet-api {:mvn/version "4.0.1"}
-  http-kit/http-kit               {:mvn/version "2.6.0-alpha1"}
+  http-kit/http-kit               {:mvn/version "2.6.0"}
   mount/mount                     {:mvn/version "0.1.16"}
   hiccup/hiccup                   {:mvn/version "2.0.0-alpha2"}
-  org.slf4j/slf4j-api             {:mvn/version "1.7.36"}
-  org.slf4j/slf4j-simple          {:mvn/version "1.7.36"}
-  io.sentry/sentry-clj            {:mvn/version "5.7.178"}
+  org.slf4j/slf4j-api             {:mvn/version "2.0.3"}
+  org.slf4j/slf4j-simple          {:mvn/version "2.0.3"}
+  io.sentry/sentry-clj            {:mvn/version "6.4.184"}
 
   ;;com.github.clj-easy/graal-build-time {:mvn/version "0.1.4"}
 
-  com.github.seancorfield/next.jdbc {:mvn/version "1.2.780"}
-  org.postgresql/postgresql         {:mvn/version "42.3.5"}
-  com.github.seancorfield/honeysql  {:mvn/version "2.2.891"}
+  com.github.seancorfield/next.jdbc {:mvn/version "1.3.834"}
+  org.postgresql/postgresql         {:mvn/version "42.5.0"}
+  com.github.seancorfield/honeysql  {:mvn/version "2.3.928"}
 
   oauth/oauth.two  {:mvn/version "0.4.0"
                     :exclusions  [prismatic/schema]}
   ;; for oauth.two
-  prismatic/schema {:mvn/version "1.2.1"}
+  prismatic/schema {:mvn/version "1.4.1"}
 
-  com.cognitect.aws/api       {:mvn/version "0.8.539"}
-  com.cognitect.aws/endpoints {:mvn/version "1.1.12.206"}
-  com.cognitect.aws/s3        {:mvn/version "822.2.1109.0"}}
+  com.cognitect.aws/api       {:mvn/version "0.8.596"}
+  com.cognitect.aws/endpoints {:mvn/version "1.1.12.307"}
+  com.cognitect.aws/s3        {:mvn/version "822.2.1145.0"}}
 
  :aliases
- {:dev {:extra-deps {nrepl/nrepl                              {:mvn/version "0.9.0"}
-                     cider/cider-nrepl                        {:mvn/version "0.28.3"}
-                     refactor-nrepl/refactor-nrepl            {:mvn/version "3.5.2"}
+ {:dev {:extra-deps {nrepl/nrepl                              {:mvn/version "1.0.0"}
+                     cider/cider-nrepl                        {:mvn/version "0.28.6"}
+                     refactor-nrepl/refactor-nrepl            {:mvn/version "3.5.5"}
                      clj-commons/pomegranate                  {:mvn/version "1.2.1"}
-                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "0.5.1"}
-                     org.clojure/tools.namespace              {:mvn/version "1.2.0"}}
+                     com.clojure-goes-fast/clj-async-profiler {:mvn/version "1.0.0"}
+                     org.clojure/tools.namespace              {:mvn/version "1.3.0"}}
         :jvm-opts   ["-Djava.net.preferIPv4Stack=true"
                      "-Djava.net.preferIPv4Addresses=true"
                      "-Djdk.attach.allowAttachSelf"
@@ -47,7 +47,7 @@
                      "-i"
                      "--middleware" "[\"cider.nrepl/cider-middleware\",\"refactor-nrepl.middleware/wrap-refactor\"]"]}
 
-  :build {:deps       {io.github.clojure/tools.build {:git/tag "v0.8.1" :git/sha "7d40500"}}
+  :build {:deps       {io.github.clojure/tools.build {:git/tag "v0.8.3" :git/sha "0d20256"}}
           :ns-default build}
 
   :native {:main-opts ["-m" "clj.native-image" "xapi.main"
