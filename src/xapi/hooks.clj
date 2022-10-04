@@ -54,8 +54,8 @@
       image         (str (format "<a href=\"%s\">&#8205;</a>" image)))))
 
 
-(defn make-hook-req [hook post]
-  (let [user     (auth/user)
+(defn make-hook-req [hook uid post]
+  (let [user     (db/one (auth/user-q uid))
         post-url (str "https://" (config/DOMAIN) (:url post))]
     (case (:type hook)
       "url"
@@ -99,14 +99,14 @@
 
 (defn send-webhooks! [uid post]
   (assert (:url post))
-  (let [hooks    (db/q {:from   [:webhook]
-                        :select [:id :type :url :headers]
-                        :where  [:and
-                                 [:= :user_id uid]
-                                 :enabled]})
-        post     (assoc post :full-url (str "https://" (config/DOMAIN) (:url post)))]
+  (let [hooks (db/q {:from   [:webhook]
+                     :select [:id :type :url :headers]
+                     :where  [:and
+                              [:= :user_id uid]
+                              :enabled]})
+        post  (assoc post :full-url (str "https://" (config/DOMAIN) (:url post)))]
     (doseq [hook hooks]
-      (let [req (make-hook-req hook post)
+      (let [req (make-hook-req hook uid post)
             res @(http/request req)]
         (store-log! :webhook_log
           {:webhook_id (:id hook)

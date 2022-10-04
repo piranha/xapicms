@@ -52,9 +52,11 @@
 
 (defn user []
   (when *uid*
-    (or (.get *user)
+    (let [user (.get *user)]
+      (if (= *uid* (:id user))
+        user
         (do (.set *user (db/one (user-q *uid*)))
-            (.get *user)))))
+            (.get *user))))))
 
 
 (defn wrap-auth [handler]
