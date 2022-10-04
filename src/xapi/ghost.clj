@@ -3,9 +3,9 @@
            [java.util.zip Adler32]
            [java.time ZonedDateTime]
            [java.time.format DateTimeFormatter])
-  (:require [clojure.java.io :as io]
+  (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [cognitect.aws.client.api :as aws]
-            [org.httpkit.client :as http]
             [hiccup2.core :as hi]
 
             [xapi.core :as core]
@@ -14,14 +14,12 @@
             [xapi.auth :as auth]
             [xapi.log :as log]
             [xapi.config :as config]
-            [cheshire.core :as json]
-            [clojure.string :as str]))
+            [xapi.hooks :as hooks]))
 
 
 (set! *warn-on-reflection* true)
 
 
-(def REQ-LOG [:request-method :uri :query-string :headers :body])
 (def BASE "resources/public/")
 (def s3 (aws/client {:api    :s3
                      ;; any existing region from AWS should be here since in
@@ -43,55 +41,6 @@
 (defn parse-dt [s]
   (-> (ZonedDateTime/parse s DateTimeFormatter/ISO_DATE_TIME)
       .toInstant))
-
-
-(defn store-log! [log-table data]
-  (db/q {:insert-into log-table
-         :values      [(assoc data :user_id (auth/uid))]})
-  (db/q {:delete-from log-table
-         :where       [:in :id {:from     [log-table]
-                                :select   [:id]
-                                :where    [:= :user_id (auth/uid)]
-                                :order-by [[:id :desc]]
-                                :offset   50}]}))
-
-
-(defn send-webhooks! [post]
-  (assert (:url post))
-  (let [hooks    (db/q {:from   [:webhook]
-                        :select [:id :type :url :headers]
-                        :where  [:and
-                                 [:= :user_id (auth/uid)]
-                                 :enabled]})
-        user     (auth/user)
-        post-url (str "https://" (config/DOMAIN) (:url post))
-        req      {:method  :post
-                  :headers {"Accept"        "application/vnd.github.v3+json"
-                            "Authorization" (str "token " (:access_token user))}
-                  :body    (json/generate-string
-                             {:event_type     "xapicms"
-                              :client_payload {:github       (:github user)
-                                               :slug         (:slug post)
-                                               :url          post-url
-                                               :draft        (= "draft" (:status post))
-                                               :published_at (:published_at post)}})}]
-    (doseq [hook hooks]
-      (let [dest (case (:type hook)
-                   "github"
-                   (format "https://api.github.com/repos/%s/%s/dispatches"
-                     (:github user) (:url hook))
-
-                   "url"
-                   (:url hook))
-            res @(http/request (assoc req :url dest))]
-        (store-log! :webhook_log
-          {:webhook_id (:id hook)
-           :post_uuid  (:uuid post)
-           :request    [:lift (-> (select-keys req REQ-LOG)
-                                  (update :headers dissoc "Authorization"))]
-           :response   [:lift (core/update-some res :error pr-str)]})
-        (log/info "sent webhook" (-> (select-keys res [:status :body :error])
-                                     (assoc :url (-> res :opts :url))))))))
 
 
 ;;; Data/Queries
@@ -207,26 +156,26 @@
                     str)
         record  {:id   (core/uuid)
                  :hash hashsum
-                 :path (make-file-path hashsum (:filename file))}]
-    (let [res (aws/invoke s3 {:op      :PutObject
-                              :request {:Bucket      "xapicms"
-                                        :Key         (:path record)
-                                        :ACL         "public-read"
-                                        :ContentType (:content-type file)
-                                        :Body        ba}})]
-      (log/info "file upload" {:key (:path record) :res res})
-      (if (:cognitect.anomalies/category res)
-        {:status 400
-         :body   (or (:cognitect.anomalies/message res)
-                     (str (:cognitect.aws.util/throwable res)))}
-        (do
-          (db/q (insert-image-q record))
-          {:status 200
-           :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}})))))
+                 :path (make-file-path hashsum (:filename file))}
+        res     (aws/invoke s3 {:op      :PutObject
+                                :request {:Bucket      "xapicms"
+                                          :Key         (:path record)
+                                          :ACL         "public-read"
+                                          :ContentType (:content-type file)
+                                          :Body        ba}})]
+    (log/info "file upload" {:key (:path record) :res res})
+    (if (:cognitect.anomalies/category res)
+      {:status 400
+       :body   (or (:cognitect.anomalies/message res)
+                   (str (:cognitect.aws.util/throwable res)))}
+      (do
+        (db/q (insert-image-q record))
+        {:status 200
+         :body   {:images [{:url (str "https://xapicms.com/" (:path record))}]}}))))
 
 
 (defn upload-post [req]
-  (store-log! :post_log {:request [:lift (select-keys req REQ-LOG)]})
+  (hooks/store-log! :post_log {:request [:lift (select-keys req hooks/REQ-LOG)]})
 
   (let [input  (-> req :body :posts first)
         dbpost (input->dbpost input)
@@ -236,7 +185,7 @@
                         :do-update-set (keys dbpost)
                         :returning     (keys dbpost)})
         post   (dbres->post res)]
-    (future (send-webhooks! post))
+    (future (hooks/send-webhooks! (:user_id dbpost) post))
     {:status 200
      :body   {:posts [post]}}))
 
