@@ -8,29 +8,31 @@
             [xapi.hooks :as hooks]))
 
 
-(defn scheduled-q []
+(defn scheduled-uuids-q []
   {:from   [:posts]
-   :select @ghost/DBPOST-KEYS
+   :select [:id]
    :where  [:and
             [:= :status "scheduled"]
             [:<= :published_at :%now]]})
 
 
-(defn -process-scheduled [dbpost]
-  (let [post (ghost/dbres->post dbpost)]
-    (hooks/send-webhooks! (:user_id dbpost) (assoc post :status "published")))
-  (db/one {:update :posts
-           :set    {:status "published"}
-           :where  [:= :uuid (:uuid dbpost)]}))
+(defn -process-scheduled [id]
+  (let [dbpost (db/one {:update    :posts
+                        :set       {:status "published"}
+                        :where     [:= :id id]
+                        :returning @ghost/DBPOST-KEYS})
+        post   (-> (ghost/dbres->post dbpost)
+                   (assoc :status "published"))]
+    (hooks/send-webhooks! (:user_id dbpost) post)))
 
 
 (defn process-scheduled! []
-  (when-let [posts (core/report-exc "Error querying DB"
-                     (seq (db/q (scheduled-q))))]
-    (log/info "Found scheduled messages" {:total (count posts)})
-    (doseq [post posts]
+  (when-let [ids (core/report-exc "Error querying DB"
+                     (seq (db/q (scheduled-uuids-q))))]
+    (log/info "Found scheduled messages" {:total (count ids)})
+    (doseq [id ids]
       (core/report-exc "Error processing cron job"
-        (-process-scheduled post)))))
+        (-process-scheduled id)))))
 
 
 (defn -process [*stop]
