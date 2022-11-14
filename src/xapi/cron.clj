@@ -30,9 +30,9 @@
   (when-let [ids (core/report-exc "Error querying DB"
                      (seq (db/q (scheduled-uuids-q))))]
     (log/info "Found scheduled messages" {:total (count ids)})
-    (doseq [id ids]
+    (doseq [item ids]
       (core/report-exc "Error processing cron job"
-        (-process-scheduled id)))))
+        (-process-scheduled (:id item))))))
 
 
 (defn -process [*stop]
